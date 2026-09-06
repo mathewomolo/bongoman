@@ -105,6 +105,7 @@
 /* Anchor links land under the fixed bar without this: scroll-margin
    tells the browser to stop short by the bar's height plus a little
    breathing room. */
+[id="feed"],
 [id="story"],
 [id="game"],
 [id="world"],

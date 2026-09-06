@@ -1,5 +1,6 @@
 import { MotionConfig } from "framer-motion";
 import Hero from "./components/Hero.jsx";
+import StoryFeed from "./components/StoryFeed.jsx";
 import Story from "./components/Story.jsx";
 import Game from "./components/Game.jsx";
 import World from "./components/World.jsx";
@@ -20,6 +21,7 @@ export default function App() {
       <SiteNav />
       <main id="main">
         <Hero />
+        <StoryFeed />
         <Story />
         <Game />
         <World />

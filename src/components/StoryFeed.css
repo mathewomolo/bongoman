@@ -1,0 +1,287 @@
+.storyfeed {
+  position: relative;
+  padding-block: var(--space-6);
+  background: var(--color-ink);
+}
+
+.storyfeed__eyebrow {
+  color: var(--color-gold);
+}
+
+.storyfeed__heading {
+  margin-top: var(--space-1);
+  font-size: clamp(2rem, 5.5vw, 3.4rem);
+  line-height: 1.05;
+  color: var(--color-paper);
+  max-width: 18ch;
+}
+
+.storyfeed__sub {
+  margin-top: var(--space-2);
+  max-width: 52ch;
+  color: var(--color-paper-dim);
+  font-size: clamp(1rem, 1.6vw, 1.1rem);
+  line-height: 1.6;
+}
+
+/* The tray scrolls sideways rather than wrapping, which is the shape
+   people expect from a status row and keeps it to one line on a phone. */
+.storyfeed__tray {
+  list-style: none;
+  margin: var(--space-4) 0 0;
+  padding: 0 4px var(--space-1);
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.storyfeed__tray::-webkit-scrollbar {
+  display: none;
+}
+
+.storyring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55em;
+  width: 92px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* The gradient ring is the whole visual language of an unwatched
+   status. Padding on the ring is what leaves the coloured band visible
+   around the thumbnail inside it. */
+.storyring__ring {
+  display: block;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(140deg, var(--color-gold-bright), var(--color-action-red));
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.storyring:hover .storyring__ring {
+  transform: scale(1.06);
+  filter: brightness(1.12);
+}
+
+.storyring:active .storyring__ring {
+  transform: scale(0.97);
+}
+
+/* Watched rings lose the gradient and go quiet, so the eye goes to
+   whatever is new. */
+.storyring--seen .storyring__ring {
+  background: rgba(243, 236, 217, 0.28);
+}
+
+.storyring__inner {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px solid var(--color-ink);
+  overflow: hidden;
+}
+
+.storyring__inner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.storyring__label {
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  color: var(--color-paper-dim);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.storyring--seen .storyring__label {
+  color: rgba(231, 221, 194, 0.55);
+}
+
+/* ---------- viewer ---------- */
+
+.storyviewer {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  background: rgba(6, 6, 8, 0.94);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+}
+
+/* Portrait on every screen: this is a phone format and it reads wrong
+   stretched wide on a desktop. */
+.storyviewer__stage {
+  position: relative;
+  width: min(420px, 100%);
+  height: min(88vh, 760px);
+  background: var(--color-ink-soft);
+  border-radius: 14px;
+  border: 3px solid var(--color-ink-line);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.storyviewer__progress {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 3;
+  display: flex;
+  gap: 4px;
+}
+
+.storyviewer__bar {
+  flex: 1;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(243, 236, 217, 0.3);
+  overflow: hidden;
+}
+
+.storyviewer__bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--color-paper);
+}
+
+.storyviewer__head {
+  position: absolute;
+  top: 24px;
+  left: 12px;
+  right: 12px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  /* A scrim so the label stays readable over a bright comic panel. */
+  background: linear-gradient(to bottom, rgba(6, 6, 8, 0.75), transparent);
+  padding-bottom: var(--space-3);
+}
+
+.storyviewer__label {
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.8rem;
+  color: var(--color-paper);
+}
+
+.storyviewer__close {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(243, 236, 217, 0.14);
+  color: var(--color-paper);
+  font-size: 0.95rem;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.storyviewer__close:hover {
+  background: rgba(243, 236, 217, 0.26);
+}
+
+.storyframe {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.storyframe--image,
+.storyframe--video {
+  object-fit: contain;
+  background: var(--color-ink);
+}
+
+.storyframe--text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+.storyframe__lettering {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: clamp(1.5rem, 6vw, 2.3rem);
+  line-height: 1.1;
+  text-align: center;
+  color: var(--color-ink);
+}
+
+.storyviewer__caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  padding: var(--space-4) var(--space-2) var(--space-2);
+  background: linear-gradient(to top, rgba(6, 6, 8, 0.9), transparent);
+  color: var(--color-paper);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* Invisible tap targets over the frame. The back zone is deliberately
+   the narrower of the two: forward is the common action and deserves
+   the bigger target. */
+.storyviewer__zone {
+  position: absolute;
+  top: 56px;
+  bottom: 0;
+  z-index: 2;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.storyviewer__zone--prev {
+  left: 0;
+  width: 32%;
+}
+
+.storyviewer__zone--next {
+  right: 0;
+  width: 68%;
+}
+
+.storyviewer__zone:focus-visible {
+  outline: 3px solid var(--color-gold-bright);
+  outline-offset: -6px;
+}
+
+@media (max-width: 520px) {
+  .storyviewer {
+    padding: 0;
+  }
+
+  .storyviewer__stage {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    border: none;
+  }
+}

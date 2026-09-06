@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import "./SiteNav.css";
 
 const LINKS = [
+  { href: "#feed", label: "Feed" },
   { href: "#story", label: "Story" },
   { href: "#game", label: "Game" },
   { href: "#world", label: "World" },
