@@ -162,6 +162,24 @@
   background: var(--color-paper);
 }
 
+/* Driven by CSS rather than JS so that holding to pause can freeze it
+   mid-bar. animation-fill-mode: forwards holds the bar full once the
+   frame finishes, in the gap before the next one mounts. */
+.storyviewer__bar-fill--running {
+  animation-name: storyProgress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+.storyviewer__stage--paused .storyviewer__bar-fill--running {
+  animation-play-state: paused;
+}
+
+@keyframes storyProgress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
 .storyviewer__head {
   position: absolute;
   top: 24px;
@@ -227,7 +245,9 @@
   font-size: clamp(1.5rem, 6vw, 2.3rem);
   line-height: 1.1;
   text-align: center;
-  color: var(--color-ink);
+  /* Paper white, carrying the dark stroke and hard shadow that the
+     comic-outline utility applies, so it reads on any tint behind it. */
+  color: var(--color-paper);
 }
 
 .storyviewer__caption {

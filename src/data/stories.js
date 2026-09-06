@@ -74,7 +74,17 @@ export const STORIES = [
       {
         type: "text",
         tint: "var(--color-action-red)",
-        caption: "PLACEHOLDER. Panels lifted from the comics. Eleven books, seventy-odd pages each.",
+        caption: "PLACEHOLDER. Panels lifted from the comics.",
+      },
+      {
+        type: "text",
+        tint: "var(--color-clay)",
+        caption: "Eleven books. Seventy-odd pages each.",
+      },
+      {
+        type: "text",
+        tint: "var(--color-gold)",
+        caption: "Crop a single panel. A whole page is unreadable on a phone.",
       },
     ],
   },
@@ -87,7 +97,17 @@ export const STORIES = [
       {
         type: "text",
         tint: "var(--color-savanna)",
-        caption: "PLACEHOLDER. Game screenshots, animation tests, work in progress.",
+        caption: "PLACEHOLDER. Screenshots straight out of the build.",
+      },
+      {
+        type: "text",
+        tint: "var(--color-ink-soft)",
+        caption: "Animation tests belong here too. Short, silent, under 3MB.",
+      },
+      {
+        type: "text",
+        tint: "var(--color-action-red)",
+        caption: "Rough and unfinished is the point. People like seeing the seams.",
       },
     ],
   },
@@ -101,6 +121,11 @@ export const STORIES = [
         type: "text",
         tint: "var(--color-clay)",
         caption: "PLACEHOLDER. Sketches, roughs, and the things that never made it in.",
+      },
+      {
+        type: "text",
+        tint: "var(--color-gold)",
+        caption: "Thirty-seven years of drawing this character.",
       },
     ],
   },

@@ -52,6 +52,21 @@ function StoryViewer({ story, onClose, onNextStory, onPrevStory }) {
   const reduceMotion = useReducedMotion();
   const closeRef = useRef(null);
 
+  // This component now stays mounted while you move between stories,
+  // so that one cuts to the next instantly instead of two viewers
+  // crossfading over each other with the old one's timer still running.
+  // That means the frame index has to be reset here rather than by a
+  // remount. Adjusting state during render like this is React's own
+  // documented pattern for deriving state from a changed prop, and it
+  // resolves before anything paints, so there is no flash of the wrong
+  // frame.
+  const [storyId, setStoryId] = useState(story.id);
+  if (story.id !== storyId) {
+    setStoryId(story.id);
+    setIndex(0);
+    setPaused(false);
+  }
+
   const item = story.items[index];
   const isVideo = item?.type === "video";
 
@@ -70,10 +85,6 @@ function StoryViewer({ story, onClose, onNextStory, onPrevStory }) {
       return i;
     });
   }, [onPrevStory]);
-
-  // No effect is needed to reset to the first frame when a different
-  // story opens: the parent keys this component by story id, so
-  // switching stories remounts it and useState(0) above does the job.
 
   // The auto-advance clock. Videos are excluded because they advance
   // themselves on `ended`. It is also skipped entirely when the visitor
@@ -113,22 +124,29 @@ function StoryViewer({ story, onClose, onNextStory, onPrevStory }) {
       aria-modal="true"
       aria-label={`${story.label}, item ${index + 1} of ${story.items.length}`}
     >
-      <div className="storyviewer__stage">
-        {/* One segment per frame: filled for what you have seen,
-            animating for the current one, empty ahead. Keyed on the
-            index so the fill restarts cleanly on every advance. */}
-        <div className="storyviewer__progress">
+      <div className={`storyviewer__stage${paused ? " storyviewer__stage--paused" : ""}`}>
+        {/* One segment per frame: full for what you have seen, filling
+            for the current one, empty ahead.
+
+            The fill is a CSS animation rather than a JS one so that
+            holding to pause can freeze it mid-bar with
+            animation-play-state. Animating the width from React meant
+            pause had to pick some duration, and any value there either
+            snapped the bar to full or fought the resume.
+
+            Keyed on story and index together so every advance restarts
+            the bars cleanly, including when a whole new story cuts in. */}
+        <div className="storyviewer__progress" key={`${story.id}-${index}`}>
           {story.items.map((_, i) => (
             <span key={i} className="storyviewer__bar">
-              <motion.span
-                className="storyviewer__bar-fill"
-                initial={{ width: i < index ? "100%" : "0%" }}
-                animate={{ width: i < index ? "100%" : i === index ? "100%" : "0%" }}
-                transition={
-                  i === index && !isVideo && !reduceMotion
-                    ? { duration: paused ? 0 : ITEM_DURATION / 1000, ease: "linear" }
-                    : { duration: 0 }
-                }
+              <span
+                className={`storyviewer__bar-fill${
+                  i === index && !isVideo && !reduceMotion ? " storyviewer__bar-fill--running" : ""
+                }`}
+                style={{
+                  width: i < index ? "100%" : "0%",
+                  animationDuration: `${ITEM_DURATION}ms`,
+                }}
               />
             </span>
           ))}
@@ -147,7 +165,10 @@ function StoryViewer({ story, onClose, onNextStory, onPrevStory }) {
           </button>
         </div>
 
-        <StoryFrame item={item} onEnded={next} paused={paused} />
+        {/* Keyed per frame so a clip is torn down and rebuilt rather
+            than having its src swapped underneath it, which is what
+            stops the outgoing video dead when you tap ahead. */}
+        <StoryFrame key={`${story.id}-${index}`} item={item} onEnded={next} paused={paused} />
 
         {item.caption && item.type !== "text" && (
           <p className="storyviewer__caption">{item.caption}</p>
@@ -288,10 +309,14 @@ export default function StoryFeed() {
         </motion.ul>
       </div>
 
+      {/* A constant key on purpose: the viewer fades in when it opens
+          and out when it closes, but moving between stories reuses the
+          same instance so one cuts straight to the next. Keying it per
+          story would crossfade two viewers over each other. */}
       <AnimatePresence>
         {openIndex !== null && (
           <StoryViewer
-            key={STORIES[openIndex].id}
+            key="story-viewer"
             story={STORIES[openIndex]}
             onClose={close}
             onNextStory={nextStory}
