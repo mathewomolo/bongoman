@@ -1,0 +1,7 @@
+# BONGOMAN
+# Everything here is public marketing material, so everything is crawlable.
+User-agent: *
+Allow: /
+
+# Replace the domain before deploying.
+Sitemap: https://bongoman.example/sitemap.xml

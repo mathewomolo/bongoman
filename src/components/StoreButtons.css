@@ -1,0 +1,105 @@
+.storebtns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.storebtns--center {
+  justify-content: center;
+}
+
+.storebtn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1em;
+  padding: 0.7em 1.4em;
+  border-radius: 8px;
+  border: 3px solid var(--color-ink-line);
+  text-decoration: none;
+  /* Same hard offset shadow the cards and carousel arrows use, so a
+     button reads as part of the comic-panel system rather than a
+     generic web control. */
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.storebtn__label {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  font-size: clamp(1rem, 1.8vw, 1.2rem);
+  line-height: 1.1;
+}
+
+.storebtn__sub {
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.68rem;
+  opacity: 0.75;
+}
+
+.storebtn--primary {
+  background: var(--color-gold);
+  color: var(--color-ink);
+}
+
+.storebtn--ghost {
+  background: var(--color-ink-soft);
+  color: var(--color-paper);
+}
+
+a.storebtn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.4);
+}
+
+a.storebtn--primary:hover {
+  background: var(--color-gold-bright);
+}
+
+a.storebtn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* The waiting state stays legible and on-brand rather than going grey
+   and dead: it is a real thing that is really coming, so it keeps its
+   shape and just loses the interaction affordances. */
+.storebtn--soon {
+  cursor: default;
+  opacity: 0.72;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.25);
+}
+
+.storebtn--soon .storebtn__sub {
+  color: var(--color-action-red);
+  opacity: 1;
+}
+
+.storebtn--ghost.storebtn--soon .storebtn__sub {
+  color: var(--color-gold);
+}
+
+.storebtns--small .storebtn {
+  padding: 0.55em 1.1em;
+  border-width: 2px;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
+}
+
+.storebtns--small .storebtn__label {
+  font-size: 0.95rem;
+}
+
+.storebtns--small .storebtn__sub {
+  font-size: 0.62rem;
+}
+
+@media (max-width: 520px) {
+  .storebtn {
+    flex: 1 1 100%;
+    align-items: center;
+  }
+}

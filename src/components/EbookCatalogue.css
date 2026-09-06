@@ -1,0 +1,279 @@
+.catalogue {
+  /* Bumped from --space-5: the backdrop behind the row (added below)
+     reads as a distinct block of its own now, so it wants a touch more
+     air above it than the plain text-to-carousel gap did before. */
+  margin-top: var(--space-6);
+}
+
+.catalogue__head {
+  max-width: 62ch;
+}
+
+.catalogue__label {
+  display: block;
+  /* Was styled as a small eyebrow (0.85rem, condensed font) like the
+     other sections' kickers above their real heading. This section
+     has no separate heading of its own, though, so bumping it onto
+     the display font at heading scale is what makes it read as the
+     section's actual title rather than a caption-sized label. */
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  line-height: 1.05;
+  color: var(--color-gold);
+  margin-bottom: var(--space-2);
+}
+
+.catalogue__caption {
+  color: var(--color-paper-dim);
+  font-size: clamp(1rem, 1.6vw, 1.1rem);
+  line-height: 1.6;
+}
+
+.catalogue__row {
+  /* Forces this row to be its own stacking-context root, so the
+     backdrop (z-index: 0) and the track/arrows (z-index: 1) are
+     compared strictly against each other here, not against whatever
+     else happens to sit in an ancestor's stacking order. */
+  isolation: isolate;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* Bumped from --space-3 to give the backdrop room to read as its own
+     layer under the head text rather than butting straight into it. */
+  margin-top: var(--space-4);
+}
+
+.catalogue__track {
+  /* Explicit stacking context above the backdrop (see
+     .catalogue__backdrop): without this, the track would paint UNDER
+     the absolutely-positioned backdrop regardless of z-index, since
+     browsers always paint positioned boxes after static ones. */
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  /* Top padding does two jobs: room for the centered card's
+     scale-and-lift pop (as before), and headroom for the backdrop to
+     stand tall above the cards rather than being pinned to the same
+     band and mostly hidden behind them. `overflow-x: auto` forces
+     `overflow-y` to compute to `auto` too, so anything that grows past
+     this padding would otherwise be cut off rather than just visually
+     overlapping its neighbors. */
+  padding: 220px 4px 20px;
+}
+
+/* Placeholder cards are decorative enough that a visible scrollbar
+   would fight the comic-page look of the rest of the site; the track
+   still scrolls (drag, trackpad, the arrow buttons), it just doesn't
+   show a scrollbar doing it. */
+.catalogue__track {
+  scrollbar-width: none;
+}
+
+.catalogue__track::-webkit-scrollbar {
+  display: none;
+}
+
+/* The flex/sizing/scroll-snap box: fixed size, never itself scaled.
+   The visual card inside it (.catalogue__card) is what grows and lifts
+   as it nears the center, so scaling it doesn't shove its neighbors
+   around or break the snap points. */
+.catalogue__card-slot {
+  position: relative;
+  flex: 0 0 auto;
+  width: 160px;
+  aspect-ratio: 2 / 3;
+  /* `center`, not `start`: this is what guarantees a single card's
+     center lands on the track's visual center after any scroll or
+     drag settles, which is the same center point the scale/lift
+     highlight math in EbookCatalogue.jsx is built around. With
+     `start`, the browser only has to line up a card's left edge,
+     which doesn't pin any one card to the middle, which is why two
+     cards could end up tied for the highlight. */
+  scroll-snap-align: center;
+  text-decoration: none;
+}
+
+.catalogue__card {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  border: 3px solid var(--color-ink-line);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: var(--space-2);
+}
+
+.catalogue__card-halftone {
+  color: rgba(12, 12, 15, 0.5);
+  opacity: 0.5;
+}
+
+.catalogue__card-tag {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 1;
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.65rem;
+  color: var(--color-ink);
+  background: var(--color-paper);
+  padding: 0.2em 0.5em;
+  border-radius: 999px;
+}
+
+.catalogue__card-title {
+  position: relative;
+  z-index: 1;
+  color: var(--color-paper);
+  font-family: var(--font-display);
+  /* Sized up from a flat 1.15rem: these titles are the whole point of
+     the section (Kham's books), so they read as the headline of each
+     card rather than a caption underneath the art. */
+  font-size: clamp(1.25rem, 2.4vw, 1.4rem);
+  line-height: 1.08;
+  text-transform: uppercase;
+}
+
+.catalogue__card-cta {
+  position: relative;
+  z-index: 1;
+  margin-top: var(--space-1);
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--color-paper);
+}
+
+.catalogue__arrow {
+  /* Same stacking reason as .catalogue__track above: keeps the arrow
+     buttons clickable and visible above the backdrop layer. */
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Redesigned from a small, thin-bordered, translucent circle: solid
+     gold fill, a thick ink outline, and a hard offset shadow, matching
+     the same comic-panel treatment as the cards themselves (see
+     .catalogue__card's border/box-shadow), rather than a quiet UI
+     control off to the side. */
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 3px solid var(--color-ink-line);
+  background: var(--color-gold);
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.catalogue__arrow:hover {
+  background: var(--color-gold-bright);
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.4);
+}
+
+.catalogue__arrow:active {
+  transform: translate(1px, 1px);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 640px) {
+  .catalogue__arrow {
+    display: none;
+  }
+}
+
+/* The one big illustration behind the row of cards: a 2:1 placeholder
+   block for now (see EbookCatalogue.jsx's `bg`/`bgTint`), swapped for a
+   real per-book PNG later without touching this layout. Anchored to
+   the row's right edge on wide screens, since the cards themselves
+   scroll from the left and this gives the row a fixed visual anchor to
+   scroll "past"; recentered on mobile, where there's no spare width to
+   anchor into without running off-screen. */
+.catalogue__backdrop {
+  position: absolute;
+  /* Anchored from the bottom, not centered: with the track's tall top
+     padding above, this lets most of the (now much bigger) art stand
+     up in that headroom in full view, with only its lower slice
+     running behind the cards, poster-behind-the-shelf style, rather
+     than sitting in the same band as the cards and mostly hidden. */
+  bottom: 70px;
+  right: 0;
+  width: clamp(480px, 56vw, 860px);
+  aspect-ratio: 2 / 1;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  pointer-events: none;
+}
+
+.catalogue__backdrop-art {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+  /* Deliberately subdued: the opaque cards in front of it read as the
+     content, this is atmosphere glimpsed around and between them, not
+     a second thing competing for attention. */
+  opacity: 0.55;
+}
+
+.catalogue__backdrop-halftone {
+  position: absolute;
+  inset: 0;
+  color: rgba(12, 12, 15, 0.4);
+}
+
+.catalogue__backdrop-label {
+  position: relative;
+  z-index: 1;
+  max-width: 85%;
+  font-family: var(--font-display);
+  /* 3x the original clamp: with the backdrop itself doubled and now
+     mostly clear of the cards, the ghost title reads as a poster
+     headline rather than a caption-sized watermark. */
+  font-size: clamp(4.5rem, 9vw, 7.2rem);
+  line-height: 1;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--color-ink);
+}
+
+@media (max-width: 640px) {
+  .catalogue__backdrop {
+    /* A 2:1 box capped to the viewport width is naturally much
+       shorter here than on desktop, so anchoring from the bottom the
+       same way would bury the whole thing behind the cards with
+       nothing poking up. Anchoring from the top instead, just past
+       the track's own top padding, keeps most of it in the clear
+       headroom with only its lower edge dipping behind the cards. */
+    top: 80px;
+    bottom: auto;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(94vw, 640px);
+  }
+}

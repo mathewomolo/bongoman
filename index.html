@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- ==================================================================
+         DOMAIN PLACEHOLDER
+         Every absolute URL below uses https://bongoman.example, which is a
+         reserved test domain that will never resolve. Find and replace it
+         with the real domain the moment you have one: a canonical tag
+         pointing at a dead host is worse than having none at all.
+         ================================================================== -->
+
+    <title>BONGOMAN: From Page to Play | Kenyan Action Platformer</title>
+    <meta
+      name="description"
+      content="A Kenyan comic hero since 1989, now a 2D action platformer set in Nairobi and the country beyond. Android first, Steam to follow, with eleven BONGOMAN books to unlock."
+    />
+    <link rel="canonical" href="https://bongoman.example/" />
+    <meta name="theme-color" content="#0c0c0f" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Open Graph. This is the block that decides what a link looks like
+         when someone drops it in WhatsApp, Instagram or X. Those scrapers
+         do not run JavaScript, so without these tags a shared link
+         previews as a blank card no matter how good the page is. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="BONGOMAN" />
+    <meta property="og:title" content="BONGOMAN: From Page to Play" />
+    <meta
+      property="og:description"
+      content="A Kenyan comic hero since 1989, now a 2D action platformer set in Nairobi and the country beyond."
+    />
+    <meta property="og:url" content="https://bongoman.example/" />
+    <meta property="og:image" content="https://bongoman.example/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="BONGOMAN: From Page to Play" />
+    <meta property="og:locale" content="en_KE" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="BONGOMAN: From Page to Play" />
+    <meta
+      name="twitter:description"
+      content="A Kenyan comic hero since 1989, now a 2D action platformer set in Nairobi and the country beyond."
+    />
+    <meta name="twitter:image" content="https://bongoman.example/og-image.png" />
+
+    <!-- Structured data. Tells Google this page is about a game rather
+         than guessing from the text, which is what earns the richer
+         result layout in search. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "BONGOMAN",
+        "alternateName": "Bongoman: From Page to Play",
+        "url": "https://bongoman.example/",
+        "image": "https://bongoman.example/og-image.png",
+        "description": "A 2D action platformer starring Bongoman, a Kenyan comic hero created in 1989, set in Nairobi and the wider Kenyan landscape.",
+        "genre": ["Action", "Platformer", "Adventure"],
+        "gamePlatform": ["Android", "PC"],
+        "applicationCategory": "Game",
+        "inLanguage": "en",
+        "countryOfOrigin": { "@type": "Country", "name": "Kenya" },
+        "author": [
+          { "@type": "Person", "name": "James Kamawira", "alternateName": "Kham" },
+          { "@type": "Person", "name": "Mathew Omolo" }
+        ],
+        "character": { "@type": "Person", "name": "Bongoman" }
+      }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Trimmed from nine font files to four. The stylesheet used to
+         request Barlow at 400/500/600/700/800 plus an italic, and Barlow
+         Condensed at 600 and 700, while the CSS only ever sets weight 400
+         or 700 and never uses italic. Five files were downloading on
+         every visit for nothing, which is real money on mobile data. -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;700&family=Barlow+Condensed:wght@700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- The markup inside #root is a fallback, not the app. React clears
+         this container the moment it mounts, so nobody with JavaScript
+         ever sees it for more than an instant. It exists for two reasons:
+         a crawler or a scraper that does not run JS still finds a real
+         heading and sentence instead of an empty div, and someone on a
+         slow connection sees the title rather than a black screen while
+         the bundle downloads. -->
+    <div id="root">
+      <div style="min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:2rem;background:#0c0c0f;color:#f3ecd9;font-family:system-ui,sans-serif">
+        <p style="letter-spacing:0.22em;text-transform:uppercase;font-size:0.85rem;color:#f2a93b;margin:0 0 0.5rem">A Kenyan comic hero</p>
+        <h1 style="font-size:clamp(3rem,14vw,8rem);line-height:0.9;margin:0;color:#f2a93b">BONGOMAN</h1>
+        <p style="font-size:1.5rem;margin:0.75rem 0 0;text-transform:uppercase;letter-spacing:0.08em">From Page to Play</p>
+        <p style="max-width:46ch;margin:1rem 0 0;line-height:1.6;color:#e7ddc2">
+          Since 1989 he has lived on Kenyan newspaper pages. Now he moves, in a 2D action
+          platformer set in Nairobi and the country beyond it. Android first, Steam after.
+        </p>
+        <noscript>
+          <p style="margin-top:1.5rem;color:#e7ddc2">
+            This site uses JavaScript for its animations, but nothing above needs it.
+          </p>
+        </noscript>
+      </div>
+    </div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

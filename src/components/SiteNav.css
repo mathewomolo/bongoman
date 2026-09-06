@@ -1,0 +1,114 @@
+.skiplink {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 10000;
+  padding: 0.8em 1.2em;
+  background: var(--color-gold);
+  color: var(--color-ink);
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+}
+
+.skiplink:focus {
+  left: var(--space-2);
+  top: var(--space-2);
+}
+
+.sitenav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 900;
+  /* Sits under the custom cursor (z-index 9999) but above every
+     section, including the carousel's own stacking contexts. */
+  background: rgba(12, 12, 15, 0.86);
+  backdrop-filter: blur(10px);
+  border-bottom: 2px solid rgba(243, 236, 217, 0.12);
+}
+
+.sitenav__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 62px;
+}
+
+.sitenav__mark {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  text-transform: uppercase;
+  color: var(--color-gold);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+
+.sitenav__links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-left: auto;
+}
+
+.sitenav__link {
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.8rem;
+  color: var(--color-paper-dim);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.sitenav__link:hover {
+  color: var(--color-gold);
+}
+
+.sitenav__cta {
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.82rem;
+  padding: 0.5em 1.3em;
+  border-radius: 999px;
+  border: 2px solid var(--color-ink-line);
+  background: var(--color-action-red);
+  color: var(--color-paper);
+  text-decoration: none;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sitenav__cta:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Below the section links' breakpoint the CTA is what survives: on a
+   phone the job of this bar is one tap, not navigation. */
+@media (max-width: 700px) {
+  .sitenav__links {
+    display: none;
+  }
+
+  .sitenav__cta {
+    margin-left: auto;
+  }
+}
+
+/* Anchor links land under the fixed bar without this: scroll-margin
+   tells the browser to stop short by the bar's height plus a little
+   breathing room. */
+[id="story"],
+[id="game"],
+[id="world"],
+[id="books"],
+[id="join"] {
+  scroll-margin-top: 78px;
+}

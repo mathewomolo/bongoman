@@ -1,0 +1,146 @@
+.game {
+  position: relative;
+  background: linear-gradient(180deg, var(--color-ink) 0%, #1a1013 100%);
+  padding-block: var(--space-6);
+  overflow: hidden;
+}
+
+.game__halftone {
+  color: var(--color-action-red);
+  opacity: 0.05;
+}
+
+.game__eyebrow {
+  color: var(--color-action-red);
+}
+
+.game__heading {
+  margin-top: var(--space-1);
+  font-size: clamp(2.2rem, 6vw, 4rem);
+  line-height: 0.98;
+  color: var(--color-paper);
+  max-width: 18ch;
+}
+
+.game__layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  align-items: start;
+  margin-top: var(--space-3);
+}
+
+@media (min-width: 860px) {
+  .game__layout {
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: var(--space-5);
+  }
+}
+
+.game__lede {
+  max-width: 62ch;
+  font-size: clamp(1rem, 1.6vw, 1.15rem);
+  line-height: 1.6;
+  color: var(--color-paper-dim);
+}
+
+.game__abilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.game__chip {
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: clamp(0.85rem, 1.4vw, 1rem);
+  padding: 0.6em 1.2em;
+  border-radius: 999px;
+  border: 2px solid var(--color-action-red);
+  color: var(--color-paper);
+  background: rgba(226, 62, 68, 0.12);
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.game__chip:hover {
+  transform: translateY(-2px);
+  background: rgba(226, 62, 68, 0.22);
+}
+
+.game__chip--active {
+  background: var(--color-action-red);
+  border-color: var(--color-action-red);
+  color: var(--color-paper);
+}
+
+/* Visited but not currently active: a quieter marker (filled outline,
+   dimmer text) so a player can see at a glance which actions they've
+   already opened, same idea as a Storyline button's visited state. */
+.game__chip--visited {
+  border-color: var(--color-paper-dim);
+  color: var(--color-paper-dim);
+  background: rgba(243, 236, 217, 0.06);
+}
+
+.game__stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.game__stage-frame {
+  position: relative;
+  width: 100%;
+  max-width: 260px;
+  aspect-ratio: 1 / 1;
+  border: 3px solid var(--color-gold);
+  border-radius: 8px;
+  background: rgba(242, 169, 59, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.game__stage-pose {
+  width: 60%;
+}
+
+.game__stage-pose svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.game__stage-label {
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.9rem;
+  color: var(--color-gold);
+}
+
+.game__quote {
+  margin: var(--space-6) auto 0;
+  max-width: 26ch;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 4.5vw, 2.8rem);
+  line-height: 1.1;
+  color: var(--color-gold);
+}
+
+.game__closer {
+  max-width: 62ch;
+  margin: var(--space-4) auto 0;
+  text-align: center;
+  color: var(--color-paper-dim);
+  font-size: clamp(1rem, 1.6vw, 1.15rem);
+  line-height: 1.6;
+}

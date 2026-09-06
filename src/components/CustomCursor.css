@@ -1,0 +1,122 @@
+/* This class is toggled on <body> by CustomCursor.jsx, only on devices
+   that report a precise (mouse-type) pointer. The `*` selector is
+   needed because links/buttons set their own `cursor: pointer` on
+   hover, which would otherwise win over a plain `body { cursor: none }`
+   the moment you hover anything clickable. */
+.cursor-replaced,
+.cursor-replaced * {
+  cursor: none !important;
+}
+
+.custom-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.custom-cursor__inner {
+  display: flex;
+  transform: translate(-50%, -50%);
+}
+
+/* CSS `gap` can't go negative, so the two eyes are pulled past
+   touching (a slight overlap) with a negative margin on the second one
+   instead, rather than a positive gap value. */
+.custom-cursor__eye + .custom-cursor__eye {
+  margin-left: -3px;
+}
+
+/* Taller than wide (16px x 24px) rather than a plain circle, so the
+   pair reads as a distinct oval-eyed look rather than plain dots. */
+.custom-cursor__eye {
+  position: relative;
+  width: 16px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-paper);
+  border: 2px solid var(--color-ink-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  transition: transform 0.09s ease;
+}
+
+/* Toggled briefly and at random by CustomCursor.jsx's blink timer.
+   Scaling the eye itself (rather than a separate eyelid element) keeps
+   this to one property, and the pupil inside scales down with it,
+   which reads correctly as the eye closing rather than the pupil
+   staying open behind a lid. */
+.custom-cursor__eye--blink {
+  transform: scaleY(0.12);
+}
+
+.custom-cursor__pupil {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-ink);
+}
+
+/* Tracks the live cursor position (see CustomCursor.jsx for why this
+   is a separate layer from the eyeball group). Static offsets on the
+   child below use left/top rather than transform, keeping `transform`
+   free for the child's own enter/exit animation. */
+.custom-cursor__bubble-anchor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.custom-cursor__bubble {
+  position: absolute;
+  left: 20px;
+  top: -44px;
+  max-width: 180px;
+  padding: 0.5em 0.8em;
+  border-radius: 10px;
+  background: var(--color-paper);
+  border: 2px solid var(--color-ink-line);
+  color: var(--color-ink);
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  font-size: 0.8rem;
+  line-height: 1.25;
+  text-align: left;
+  white-space: normal;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+/* The comic-bubble tail, pointing back down toward the eyes: two
+   stacked CSS triangles (border-only, no width/height), the lower one
+   slightly bigger and in the outline color, so the smaller paper-color
+   triangle on top of it leaves a visible 2px stroke around the tail,
+   matching the bubble's own border. */
+.custom-cursor__bubble::before,
+.custom-cursor__bubble::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+.custom-cursor__bubble::before {
+  bottom: -12px;
+  border-width: 12px 9px 0 9px;
+  border-color: var(--color-ink-line) transparent transparent transparent;
+}
+
+.custom-cursor__bubble::after {
+  bottom: -9px;
+  left: 12px;
+  border-width: 9px 7px 0 7px;
+  border-color: var(--color-paper) transparent transparent transparent;
+}

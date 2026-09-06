@@ -1,0 +1,217 @@
+.world {
+  position: relative;
+  background: var(--color-ink);
+}
+
+.world__intro {
+  padding-block: var(--space-6) var(--space-4);
+}
+
+.world__eyebrow {
+  color: var(--color-savanna);
+}
+
+.world__heading {
+  margin-top: var(--space-1);
+  font-size: clamp(2.2rem, 6vw, 4rem);
+  line-height: 0.98;
+  color: var(--color-paper);
+  max-width: 20ch;
+}
+
+/* Scroll-linked crossfade zone: this element is tall (300vh) so there's
+   enough scroll distance for three stages to fade through one another
+   while the inner .world__sticky stays pinned to the viewport. */
+.world__scrollzone {
+  position: relative;
+  /* Was 300vh: three full screens of scrolling to read three short
+     paragraphs. Sticky scroll-driven sections are where mobile readers
+     give up, and the cost of overlong ones is that people never reach
+     what comes after. 180vh keeps the crossfade legible while asking
+     for a lot less. This single number controls the whole pacing of the
+     section, so nudge it if it now feels rushed. */
+  height: 180vh;
+}
+
+.world__sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.world__stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  --stage-bg-scale: 0.9;
+}
+
+/* PLACEHOLDER: world-urban.png, world-periurban.png and world-rural.png
+   (in /public/images/) are simple silhouette stand-ins for real
+   illustrated environment art, one per stage of the Nairobi -> peri-urban
+   -> savanna progression. Each is a transparent-sky PNG, so the tint
+   gradient shows through the sky and this stage's own solid fallback
+   color shows through wherever the PNG is fully transparent or scaled
+   back from the frame edges.
+
+   The illustration lives on its own ::after layer instead of being part
+   of .world__stage's background, specifically so it can be pulled back
+   a bit further than a plain `cover` fit without dragging the tint or
+   the text content along with it. `background-size: cover` first fills
+   that ::after box exactly, at any screen width, cropping overflow
+   rather than shrinking to fit.
+
+   The pull-back is vertical only (`scaleY`, not `scale`): the width
+   stays untouched so the illustration always spans edge to edge on any
+   screen, large or mobile, with no gap down the sides. `transform-origin:
+   50% 100%` anchors the shrink to the bottom edge, so the ground line
+   stays planted while the image pulls back upward, opening a gap above
+   it instead. --stage-bg-scale is one shared number so "pull it back
+   more" is a single value to nudge, here or per stage below.
+
+   The tint sits on a separate ::before, above the image (z-index 1 vs
+   0) but never transformed, so the color wash still reaches every edge
+   even once the illustration has been pulled up. When real art replaces
+   these files, keep the same filenames (or update the three url()s
+   below) and this layering keeps working unchanged. */
+.world__stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  background-size: cover;
+  transform: scaleY(var(--stage-bg-scale));
+  transform-origin: 50% 100%;
+}
+
+.world__stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.world__stage--urban {
+  background: var(--color-ink);
+}
+
+.world__stage--urban::after {
+  background-image: url("/images/world-urban.png");
+}
+
+.world__stage--urban::before {
+  background: linear-gradient(180deg, rgba(12, 12, 15, 0.45) 0%, rgba(22, 22, 27, 0.65) 100%);
+}
+
+.world__stage--periurban {
+  background: #241209;
+}
+
+.world__stage--periurban::after {
+  background-image: url("/images/world-periurban.png");
+}
+
+.world__stage--periurban::before {
+  background: linear-gradient(180deg, rgba(36, 18, 9, 0.4) 0%, rgba(193, 96, 47, 0.35) 130%);
+}
+
+.world__stage--rural {
+  background: #0e2418;
+}
+
+.world__stage--rural::after {
+  background-image: url("/images/world-rural.png");
+}
+
+.world__stage--rural::before {
+  background: linear-gradient(180deg, rgba(14, 36, 24, 0.4) 0%, rgba(47, 122, 79, 0.35) 140%);
+}
+
+.world__stage-shapes {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.world__stage-copy {
+  position: relative;
+  z-index: 2;
+  padding-bottom: var(--space-6);
+  max-width: 44ch;
+}
+
+@media (min-width: 1024px) {
+  .world__stage-copy {
+    max-width: 60ch;
+  }
+}
+
+.world__stage-label {
+  display: block;
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.9rem;
+  color: var(--color-gold);
+  margin-bottom: var(--space-1);
+}
+
+.world__stage-copy p {
+  color: var(--color-paper);
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
+  line-height: 1.5;
+}
+
+.world__progress {
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  z-index: 2;
+}
+
+.world__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--color-paper);
+  display: block;
+}
+
+.world__outro {
+  padding-block: var(--space-5) var(--space-6);
+  max-width: 62ch;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.world__outro p {
+  color: var(--color-paper-dim);
+  font-size: clamp(1rem, 1.6vw, 1.15rem);
+  line-height: 1.6;
+}
+
+.world__outro-emphasis {
+  margin-top: var(--space-3);
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 3vw, 1.9rem);
+  color: var(--color-gold);
+  line-height: 1.3;
+}
+
+@media (max-width: 640px) {
+  .world__progress {
+    right: var(--space-2);
+  }
+}

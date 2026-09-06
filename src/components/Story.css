@@ -1,0 +1,167 @@
+.story {
+  position: relative;
+  background: var(--color-ink);
+  padding-block: var(--space-6) var(--space-6);
+  overflow: hidden;
+}
+
+.story__figure {
+  position: absolute;
+  z-index: 0;
+  width: clamp(32px, 4.5vw, 56px);
+  pointer-events: none;
+}
+
+.story__figure svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.story__figure--left {
+  left: 16px;
+  top: 70%;
+}
+
+.story__figure--right {
+  right: 16px;
+  top: 84%;
+}
+
+/* The text column (.container) is capped at --container-width (1180px)
+   and centered, so the side gutter is (viewport - 1180) / 2, plus the
+   container's own 24px inner padding before the text itself starts.
+   Below 1300px that combined safe zone gets smaller than a figure plus
+   its edge offset, so the figures are hidden rather than risk sitting
+   over the text. This is the same 1300px threshold confirmed working
+   before; the figures were shrunk again so a bigger inward offset
+   (16px instead of 6px) still fits inside it. */
+@media (max-width: 1300px) {
+  .story__figure {
+    display: none;
+  }
+}
+
+.story__eyebrow {
+  color: var(--color-gold);
+}
+
+.story__heading {
+  margin-top: var(--space-1);
+  font-size: clamp(2.2rem, 6vw, 4rem);
+  line-height: 0.98;
+  color: var(--color-paper);
+  max-width: 16ch;
+}
+
+.story__panels {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+}
+
+@media (min-width: 860px) {
+  .story__panels {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    align-items: start;
+  }
+}
+
+.story__panel {
+  position: relative;
+  padding: var(--space-4) var(--space-3) var(--space-3);
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.story__panel p {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(1rem, 1.5vw, 1.1rem);
+  line-height: 1.6;
+}
+
+.story__panel-year {
+  position: absolute;
+  top: -0.35em;
+  right: 0.4em;
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 10vw, 6rem);
+  line-height: 1;
+  opacity: 0.12;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.story__panel-label {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 1rem;
+  margin-bottom: var(--space-2);
+}
+
+.story__panel--page {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  border: 3px solid var(--color-ink);
+  box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.35);
+}
+
+.story__panel--page .story__panel-year {
+  color: var(--color-ink);
+}
+
+.story__panel--page .story__panel-label {
+  color: var(--color-action-red);
+}
+
+.story__panel--play {
+  background: linear-gradient(160deg, var(--color-ink-soft), var(--color-ink));
+  color: var(--color-paper);
+  border: 3px solid var(--color-gold);
+  box-shadow: 10px 10px 0 rgba(242, 169, 59, 0.18);
+}
+
+.story__panel--play .story__panel-year {
+  color: var(--color-gold);
+}
+
+.story__panel--play .story__panel-label {
+  color: var(--color-gold);
+}
+
+.story__panel--play p {
+  color: var(--color-paper-dim);
+}
+
+.story__quote {
+  margin: var(--space-6) auto 0;
+  max-width: 22ch;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 5vw, 3.2rem);
+  line-height: 1.05;
+  color: var(--color-gold);
+}
+
+.story__closer {
+  max-width: 62ch;
+  margin: var(--space-4) auto 0;
+  text-align: center;
+  color: var(--color-paper-dim);
+  font-size: clamp(1rem, 1.6vw, 1.15rem);
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .story__panel--page,
+  .story__panel--play {
+    transform: none !important;
+  }
+}

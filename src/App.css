@@ -1,0 +1,13 @@
+.next-up {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-1);
+  background: var(--color-ink);
+  color: var(--color-paper-dim);
+}
+
+.next-up .eyebrow {
+  color: var(--color-gold);
+}

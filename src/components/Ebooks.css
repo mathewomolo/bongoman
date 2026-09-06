@@ -1,0 +1,76 @@
+.ebooks {
+  position: relative;
+  background: var(--color-ink-soft);
+  padding-block: var(--space-6);
+}
+
+.ebooks__eyebrow {
+  color: var(--color-gold);
+}
+
+.ebooks__heading {
+  margin-top: var(--space-1);
+  font-size: clamp(2rem, 5.5vw, 3.4rem);
+  line-height: 1.05;
+  color: var(--color-paper);
+  max-width: 20ch;
+}
+
+.ebooks__layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  align-items: center;
+  margin-top: var(--space-5);
+}
+
+@media (min-width: 780px) {
+  .ebooks__layout {
+    grid-template-columns: 0.8fr 1fr;
+    gap: var(--space-5);
+  }
+}
+
+.ebooks__spines {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+}
+
+.ebooks__spine {
+  width: 64px;
+  height: 190px;
+  border-radius: 4px 10px 10px 4px;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.35);
+}
+
+.ebooks__text p {
+  color: var(--color-paper-dim);
+  font-size: clamp(1rem, 1.6vw, 1.1rem);
+  line-height: 1.6;
+  margin-bottom: var(--space-2);
+}
+
+.ebooks__steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+}
+
+.ebooks__step {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+  color: var(--color-gold);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ebooks__arrow {
+  color: var(--color-paper-dim);
+  font-size: 0.7em;
+}

@@ -1,0 +1,161 @@
+/* =========================================================
+   BONGOMAN: Design Foundation
+   PLACEHOLDER art direction until real illustrations/comic
+   art are dropped in. Built to make swapping real assets in
+   later painless: anywhere you see a shape/gradient standing
+   in for art, it's flagged with a PLACEHOLDER comment.
+   ========================================================= */
+
+:root {
+  /* --- Palette ---
+     Dark "ink" base evokes the comic page + night streets of
+     Nairobi. Gold = sunset/energy/hero accent. Action-red for
+     combat/impact moments. Savanna green + clay for the world's
+     progression from city to landscape. */
+  --color-ink: #0c0c0f;
+  --color-ink-soft: #16161b;
+  --color-paper: #f3ecd9;
+  --color-paper-dim: #e7ddc2;
+  --color-gold: #f2a93b;
+  --color-gold-bright: #ffc766;
+  --color-action-red: #e23e44;
+  --color-savanna: #2f7a4f;
+  --color-clay: #c1602f;
+  --color-ink-line: rgba(12, 12, 15, 0.85);
+
+  --font-display: "Anton", "Barlow Condensed", sans-serif;
+  --font-condensed: "Barlow Condensed", sans-serif;
+  --font-body: "Barlow", sans-serif;
+
+  --container-width: 1180px;
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2.5rem;
+  --space-5: 4rem;
+  --space-6: 6rem;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
+
+#root {
+  position: relative;
+}
+
+.container {
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding-inline: var(--space-3);
+}
+
+/* PLACEHOLDER: comic halftone dot texture, a cheap CSS stand-in
+   for a real halftone/paper-grain texture to drop in later. */
+.halftone {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(currentColor 1px, transparent 1.4px);
+  background-size: 14px 14px;
+}
+
+/* Comic-book outlined text: bold fill + hard dark stroke,
+   built from stacked text-shadows for cross-browser support. */
+.comic-outline {
+  -webkit-text-stroke: 2px var(--color-ink-line);
+  paint-order: stroke fill;
+  text-shadow:
+    3px 3px 0 var(--color-ink-line),
+    -1px -1px 0 var(--color-ink-line),
+    1px -1px 0 var(--color-ink-line),
+    -1px 1px 0 var(--color-ink-line);
+}
+
+.eyebrow {
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Keyboard focus ring. `:focus-visible` rather than `:focus` is the
+   important part: the browser only paints it when someone is actually
+   navigating by keyboard, so mouse users never see a ring after a
+   click. Before this the site had no focus styling at all, which meant
+   tabbing through it was invisible. */
+:focus-visible {
+  outline: 3px solid var(--color-gold-bright);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Some people get motion sick from parallax and scroll-driven movement,
+   and every OS has a "reduce motion" setting for it. This is the
+   standard CSS half: near-instant transitions and no looping
+   animations. The JS half lives in App.jsx, where MotionConfig makes
+   framer-motion respect the same setting. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
