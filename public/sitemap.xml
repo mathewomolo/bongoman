@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Replace bongoman.example with the real domain before deploying. -->
+<!-- Replace bongoman-website.pages.dev with the real domain before deploying. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://bongoman.example/</loc>
+    <loc>https://bongoman-website.pages.dev/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://bongoman.example/press/</loc>
+    <loc>https://bongoman-website.pages.dev/press/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>

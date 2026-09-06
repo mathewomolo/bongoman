@@ -4,4 +4,4 @@ User-agent: *
 Allow: /
 
 # Replace the domain before deploying.
-Sitemap: https://bongoman.example/sitemap.xml
+Sitemap: https://bongoman-website.pages.dev/sitemap.xml
