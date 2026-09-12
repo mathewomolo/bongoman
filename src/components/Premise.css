@@ -1,0 +1,214 @@
+.premise {
+  position: relative;
+  padding-block: var(--space-6);
+  background: var(--color-ink);
+}
+
+.premise__eyebrow {
+  color: var(--color-gold);
+}
+
+.premise__heading {
+  margin-top: var(--space-1);
+  font-size: clamp(2rem, 5.5vw, 3.4rem);
+  line-height: 1.05;
+  color: var(--color-paper);
+  max-width: 22ch;
+}
+
+/* Stacked on a phone, which is what was agreed: three 500x600 cards side
+   by side at that width would each be about 100px wide. */
+.premise__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+
+@media (min-width: 860px) {
+  .premise__grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-3);
+  }
+}
+
+/* ---- the card ------------------------------------------------------
+
+   THE FOUR NUMBERS WORTH TOUCHING, kept together here rather than
+   scattered down the file:
+
+     --peek        how much of the panel shows at rest. This is the
+                   title band. Set it to 0 for the pure reference
+                   behaviour, where the card is bare artwork until you
+                   hover it. It is not 0 because three unlabelled
+                   pictures on a marketing page is a guessing game.
+     --panel-rise  how long the panel takes to travel.
+     --copy-lag    how far BEHIND the panel the words start. This is the
+                   number the whole effect lives on. Take it to 0 and
+                   the thing immediately looks cheap.
+     --copy-rise   how long the words take once they start. */
+.premise__card {
+  --peek: 72px;
+  --panel-rise: 0.42s;
+  --copy-lag: 0.12s;
+  --copy-rise: 0.34s;
+
+  /* Matches the 500 x 600 source art, declared here so the row does not
+     reflow as the three images load in. */
+  position: relative;
+  aspect-ratio: 5 / 6;
+  overflow: hidden;
+
+  border: 3px solid var(--color-ink-line);
+  border-radius: 6px;
+  background: var(--color-ink-soft);
+}
+
+.premise__art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---- the panel -----------------------------------------------------
+
+   Bottom anchored and moved with transform only. Never height, top or
+   width: those are layout properties, so animating them makes the
+   browser re-run layout on every frame and the wipe stutters on a
+   phone. transform and opacity are the two things it can do on the
+   compositor without touching layout at all.
+
+   `translateY(100%)` is relative to the PANEL's own height, not the
+   card's, which is why this works without knowing how tall the copy
+   is. Subtracting --peek from that leaves exactly the title band
+   showing. */
+.premise__panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  padding-inline: var(--space-3);
+  padding-bottom: var(--space-3);
+
+  background: var(--panel-bg);
+  color: var(--panel-fg);
+
+  transform: translateY(calc(100% - var(--peek)));
+  transition: transform var(--panel-rise) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.premise__card:hover .premise__panel,
+.premise__card:focus-within .premise__panel {
+  transform: translateY(0);
+}
+
+/* The title band. Its height IS --peek, so what shows at rest is
+   exactly this line and nothing clipped above or below it. */
+.premise__title {
+  display: flex;
+  align-items: center;
+  height: var(--peek);
+  margin: 0;
+
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: clamp(1rem, 1.6vw, 1.15rem);
+  line-height: 1.1;
+  color: inherit;
+}
+
+/* ---- the staged copy -----------------------------------------------
+
+   THE POINT OF THE WHOLE SECTION.
+
+   The panel leads and the words follow. The delay lives ONLY in the
+   hover rule, deliberately, so it applies on the way in and not on the
+   way out. Put the delay on the base rule instead and the copy hangs
+   around for an extra 120ms after you move the pointer away, which
+   reads as the card being slow to let go.
+
+   So: arriving, panel first and words catching up. Leaving, both go at
+   once. */
+.premise__copy {
+  margin: 0;
+  padding-bottom: var(--space-1);
+  font-size: clamp(0.92rem, 1.3vw, 1rem);
+  line-height: 1.55;
+  color: inherit;
+
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity var(--copy-rise) ease,
+    transform var(--copy-rise) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.premise__card:hover .premise__copy,
+.premise__card:focus-within .premise__copy {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: var(--copy-lag);
+}
+
+/* ---- the three panel colours ---------------------------------------
+
+   Red and gold are the site's existing accents. The teal is the one new
+   colour on this page, and it is the same teal the placeholder art
+   batch already uses, so it is at least consistent within the project
+   rather than pulled out of the air. Change it here and it changes
+   nowhere else. */
+.premise__card--red {
+  --panel-bg: var(--color-action-red);
+  --panel-fg: var(--color-paper);
+}
+
+.premise__card--gold {
+  --panel-bg: var(--color-gold);
+  --panel-fg: var(--color-ink);
+}
+
+.premise__card--teal {
+  /* PLACEHOLDER: not yet a site token. Promote it to index.css if it
+     earns a second use anywhere. */
+  --panel-bg: #2a9d8f;
+  --panel-fg: var(--color-paper);
+}
+
+/* ---- touch ---------------------------------------------------------
+
+   No hover on a phone, so the panels sit open permanently. Agreed as
+   the default, because the alternative is that a large share of
+   visitors never see the copy at all.
+
+   `hover: none` targets the input device rather than the screen width,
+   which is the right test: a small laptop window still has a pointer
+   and should still get the wipe. */
+@media (hover: none) {
+  .premise__panel {
+    transform: translateY(0);
+  }
+
+  .premise__copy {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Someone who asked for less movement gets the panels open rather than
+   static and empty. The information is the point; the wipe is not. */
+@media (prefers-reduced-motion: reduce) {
+  .premise__panel {
+    transform: translateY(0);
+    transition: none;
+  }
+
+  .premise__copy {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
