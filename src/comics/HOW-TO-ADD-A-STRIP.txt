@@ -1,0 +1,139 @@
+# The weekly comic strip: how it works and how to feed it
+
+Built 2026-09-12. Section id `comic`, sits between The World and Ebooks.
+
+House rules for this doc: no em dashes or en dashes.
+
+---
+
+## The weekly job, in full
+
+Save the image into the series folder, named with the date it should go live.
+
+    src/comics/bongoman-and-the-elixir-of-youth/2026-09-28.png
+
+Then commit. That is everything. No numbering, no manifest, no code change.
+
+A copy of this lives at `src/comics/HOW-TO-ADD-A-STRIP.txt`, in the folder
+Mathew will actually be standing in.
+
+---
+
+## Why it lives in src/ and not public/images/
+
+This is the one exception on the site. Everything in `public/` is copied to
+the output verbatim and the build never looks inside it, which is fine when
+the code names each file. The comic's whole point is that no file is ever
+named in code: `import.meta.glob` discovers them, and it can only see inside
+`src/`.
+
+Side benefit: assets under `src/` go through the pipeline and get
+content-hashed, so caching sorts itself out.
+
+---
+
+## The filename does two jobs
+
+`YYYY-MM-DD.png`, zero padded. Sorting ISO dates as plain strings gives
+correct chronological order with no date parsing, and comparing against
+today gives the release gate in one line.
+
+Two slices in one week: `2026-09-28b.png`. Still sorts correctly.
+
+A name the regex does not match is skipped in silence. That is the first
+thing to check when a strip does not appear. The second is whether the
+folder has an entry in `src/data/comics.js`.
+
+---
+
+## Build time vs runtime, which is the part worth understanding
+
+- The **file list** is resolved at BUILD time by `import.meta.glob`.
+- The **date check** runs in the visitor's browser on every page load.
+
+So a queued strip is already in the deployed bundle and reveals itself on
+its date with no rebuild and no commit. Draw twelve parts, date them out to
+December, commit once, and the site keeps releasing them on schedule
+untouched.
+
+New art is the other case: the gate can only release what has already
+shipped, so a new image needs `git add`, `git commit`, `git push`.
+
+**A curtain, not a lock.** A queued strip IS deployed; its filename is
+content-hashed so it is not guessable, but a determined person could find
+it. That is the honest limit of gating on a static site. If a strip must not
+exist until release day, do not commit it until then.
+
+---
+
+## Reader state
+
+Landing position is remembered per series in `localStorage`
+(`bongoman.comic.<slug>`). A first time reader lands on part 1, because this
+is a continuing story and dropping someone on the newest slice means reading
+the ending first. A returning reader lands where they stopped.
+
+Wrapped in try/catch: localStorage throws outright in a private window and
+in some embedded previews, and a comic failing to render over a bookmark is
+not a trade worth making.
+
+---
+
+## The carousel
+
+CSS scroll snap, not a JS carousel.
+
+    .comic__track { display: flex; gap: 0; overflow-x: auto;
+                    scroll-snap-type: x mandatory; }
+    .comic__panel { flex: 0 0 100%; scroll-snap-align: start; }
+
+`gap: 0` is what sells the one-long-image illusion. `flex: 0 0 100%`
+guarantees exactly one slice on screen with everything else off the side,
+whether there are four or four hundred. Touch dragging, momentum and the
+flick-to-skip behaviour all come from the browser. The only JavaScript is
+the desktop prev/next buttons calling `scrollBy`.
+
+---
+
+## The mobile compromise
+
+A 1000x320 strip on a 390px phone is 125px tall and each of its four panels
+lands about 98px wide. Unreadable. Scaling down is not an option at this
+aspect ratio.
+
+So below 760px the slice stops being viewport-width and becomes 60vh tall
+instead, which makes it wider than the screen. You scroll through the panels
+of one slice and on into the next.
+
+Snapping drops to `proximity` there deliberately: `mandatory` on an item
+wider than the viewport fights the reader, because the browser keeps pulling
+the scroll back to a snap point they are trying to get past.
+
+The alternative was a separate full-screen reader. More machinery than this
+needed on day one, and worth revisiting if the format proves awkward in use.
+
+---
+
+## Starting a new series
+
+Two steps, once per story.
+
+1. New folder under `src/comics/`, lowercase with dashes.
+2. One line in `src/data/comics.js`, key matching the folder name exactly.
+
+The archive picker renders only when there is more than one series, so it
+appears by itself. Nothing to switch on.
+
+`parts` is an optional override in that file, for when a story will run
+longer than what has been drawn so far, so the header can say "Part 2 of 12"
+rather than "Part 2 of 2".
+
+---
+
+## Known rough edge
+
+The section renders `null` when no slice is released. Correct in production,
+unhelpful while setting up, because an empty folder and a working-but-empty
+section look identical from the outside. That is exactly what happened on
+build day: the zip had not been extracted and the section was simply absent.
+`audit.py` was written partly to make that state visible.

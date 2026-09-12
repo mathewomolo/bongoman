@@ -1,5 +1,4 @@
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import LoopingClip from "./LoopingClip.jsx";
 import "./Story.css";
 
@@ -21,64 +20,9 @@ const CLIPS = [
 const KHAM_PORTRAIT = "/images/story/kham.png";
 const MATHEW_PORTRAIT = "/images/story/mathew.png";
 
-// PLACEHOLDER: FigureLeft and FigureRight are simple stroke stick figures
-// standing in for real illustrated Bongoman character art. They sit in the
-// side margins outside the text column on purpose (not centered over it),
-// so the scroll-linked float below can move them without ever crossing
-// over the copy, at any scroll position.
-function FigureLeft() {
-  return (
-    <svg viewBox="0 0 200 320" fill="none" aria-hidden="true">
-      <circle cx="90" cy="55" r="38" stroke="#ffffff" strokeWidth="10" />
-      <path d="M90 92 L70 180" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" />
-      <path d="M70 130 L20 170" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" />
-      <path d="M70 130 L140 110" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" />
-      <path d="M70 180 L40 280" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" />
-      <path d="M70 180 L130 260" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function FigureRight() {
-  return (
-    <svg viewBox="0 0 200 320" fill="none" aria-hidden="true">
-      <text x="140" y="50" fontFamily="var(--font-display)" fontSize="48" fill="#ffffff">
-        ?
-      </text>
-      <circle cx="90" cy="110" r="38" stroke="#ffffff" strokeWidth="10" />
-      <path d="M90 148 L90 230" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" />
-      <path d="M90 170 L30 150" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" />
-      <path d="M90 170 L150 190" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" />
-      <path d="M90 230 L60 300" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" />
-      <path d="M90 230 L120 300" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export default function Story() {
-  const sectionRef = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
-  });
-
-  // Both figures fade in, float upward at different speeds (the speed
-  // difference is what reads as parallax depth), then fade out before
-  // the section ends, rather than just appearing and disappearing.
-  const figureLeftY = useTransform(scrollYProgress, [0, 1], [40, -180]);
-  const figureLeftOpacity = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [0, 1, 1, 0]);
-  const figureRightY = useTransform(scrollYProgress, [0, 1], [20, -260]);
-  const figureRightOpacity = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [0, 1, 1, 0]);
-
   return (
-    <section className="story" id="story" ref={sectionRef}>
-      <motion.div className="story__figure story__figure--left" style={{ y: figureLeftY, opacity: figureLeftOpacity }}>
-        <FigureLeft />
-      </motion.div>
-      <motion.div className="story__figure story__figure--right" style={{ y: figureRightY, opacity: figureRightOpacity }}>
-        <FigureRight />
-      </motion.div>
-
+    <section className="story" id="story">
       <div className="container">
         <motion.p
           className="eyebrow story__eyebrow"

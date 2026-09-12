@@ -120,3 +120,14 @@
   border-width: 9px 7px 0 7px;
   border-color: var(--color-paper) transparent transparent transparent;
 }
+/* Belt and braces. CustomCursor.jsx already checks for a precise
+   pointer before switching any of this on, so this should never be the
+   thing that hides it. It is one rule and it means a touch device
+   cannot end up with a fixed-position pair of eyes parked in a corner
+   even if that check ever changes. */
+@media (hover: none) {
+  .custom-cursor,
+  .custom-cursor__bubble-anchor {
+    display: none;
+  }
+}

@@ -28,12 +28,38 @@
   --font-body: "Barlow", sans-serif;
 
   --container-width: 1180px;
+
+  /* --- Spacing scale ---
+
+     THE THREE LARGE STEPS ARE FLUID. THE THREE SMALL ONES ARE NOT.
+
+     This file used to have no breakpoints and no fluid values at all,
+     which meant --space-6 was 96px on a 390px phone exactly as it was
+     on a 27 inch monitor. Nearly every section on the site uses
+     `padding-block: var(--space-6)`, so that was 192px of empty space
+     per section, on a screen 844px tall, across a dozen sections. Over
+     two thousand pixels of nothing to scroll past. That was the single
+     biggest spacing problem on mobile and it lived here rather than in
+     any one component.
+
+     Large steps separate SECTIONS, so they should scale with the
+     viewport: a gap that reads as generous on a desktop reads as a
+     dead screen on a phone.
+
+     Small steps sit INSIDE components, between a label and the text
+     under it, or around a button's own padding. Those are set by the
+     type size, not the screen, and shrinking them just makes things
+     look cramped. They stay fixed.
+
+     The vw middle term is what does the work; the clamp ends only stop
+     it running away. At 1180px and wider these land within a pixel or
+     two of the old fixed values, so nothing on desktop moves. */
   --space-1: 0.5rem;
   --space-2: 1rem;
   --space-3: 1.5rem;
-  --space-4: 2.5rem;
-  --space-5: 4rem;
-  --space-6: 6rem;
+  --space-4: clamp(1.75rem, 3.4vw, 2.5rem);
+  --space-5: clamp(2.5rem, 5.4vw, 4rem);
+  --space-6: clamp(3rem, 8.1vw, 6rem);
 
   color-scheme: dark;
 }
@@ -52,6 +78,13 @@ body {
   color: var(--color-paper);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+
+  /* Worth knowing what this is doing: it HIDES horizontal overflow
+     rather than preventing it. Anything wider than the viewport is
+     silently clipped instead of producing a scrollbar, which means an
+     element running off the side leaves no visible trace while you are
+     building. Keep it, the site needs it for the full-bleed rows, but
+     do not read "no horizontal scrollbar" as "nothing is overflowing". */
   overflow-x: hidden;
 }
 

@@ -4,6 +4,7 @@ import StoryFeed from "./components/StoryFeed.jsx";
 import Story from "./components/Story.jsx";
 import Game from "./components/Game.jsx";
 import World from "./components/World.jsx";
+import ComicStrip from "./components/ComicStrip.jsx";
 import Ebooks from "./components/Ebooks.jsx";
 import Premise from "./components/Premise.jsx";
 import Mellowphant from "./components/Mellowphant.jsx";
@@ -29,6 +30,10 @@ export default function App() {
         <Story />
         <Game />
         <World />
+        {/* The weekly strip sits directly above the ebooks. It is the
+            free sample and the catalogue is the thing you buy, so
+            sample first, catalogue second. */}
+        <ComicStrip />
         <Ebooks />
         {/* The three hover cards. Placed here rather than before The
             World, which is where the original spec put them, because a

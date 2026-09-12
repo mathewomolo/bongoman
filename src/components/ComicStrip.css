@@ -1,0 +1,226 @@
+.comic {
+  position: relative;
+  padding-block: var(--space-6);
+  background: var(--color-ink);
+}
+
+.comic__eyebrow {
+  color: var(--color-gold);
+}
+
+.comic__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.comic__heading {
+  font-size: clamp(1.8rem, 4.5vw, 3rem);
+  line-height: 1.05;
+  color: var(--color-paper);
+  max-width: 22ch;
+}
+
+.comic__meta {
+  margin-top: var(--space-1);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.85rem;
+  color: var(--color-gold);
+}
+
+.comic__schedule {
+  color: var(--color-paper-dim);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+}
+
+.comic__picker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.comic__picker-label {
+  font-family: var(--font-condensed);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.72rem;
+  color: var(--color-paper-dim);
+}
+
+.comic__picker select {
+  font-family: var(--font-condensed);
+  font-size: 0.85rem;
+  padding: 0.4em 0.7em;
+  border-radius: 4px;
+  border: 2px solid var(--color-ink-line);
+  background: var(--color-ink-soft);
+  color: var(--color-paper);
+}
+
+/* ---- the rail ------------------------------------------------------
+
+   Full viewport width, outside .container. One slice fills the screen
+   edge to edge, which is what makes the next one read as waiting just
+   off the side rather than sitting inside a widget. */
+.comic__rail {
+  position: relative;
+  margin-top: var(--space-4);
+}
+
+/* ---- the track, which is the whole carousel ------------------------
+
+   There is no carousel library here and no JavaScript driving the
+   swipe. `scroll-snap-type: x mandatory` over a flex row is the entire
+   mechanism, and the browser supplies touch dragging, momentum, the
+   "flick hard and skip several" behaviour, and keyboard scrolling for
+   free.
+
+   `gap: 0` is what sells the illusion. With no space between slices,
+   dragging looks like pulling one long image across the screen rather
+   than shuffling separate cards. */
+.comic__track {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+
+  scroll-snap-type: x mandatory;
+
+  scrollbar-width: none;
+}
+
+.comic__track::-webkit-scrollbar {
+  display: none;
+}
+
+/* `0 0 100%` is the line that guarantees ONE slice on screen. Each
+   panel is exactly the width of the track, so slice two starts at the
+   right edge and everything after it is off screen. A thousand slices
+   still show one. */
+.comic__panel {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.comic__image {
+  display: block;
+  width: 100%;
+
+  /* 1000 / 320 is 25:8. Declared rather than inferred so the row does
+     not jump as each slice loads in. */
+  aspect-ratio: 25 / 8;
+  object-fit: contain;
+  background: var(--color-ink-soft);
+}
+
+/* ---- arrows --------------------------------------------------------
+
+   Desktop only. On touch the swipe is the interaction and a pair of
+   buttons sitting over the artwork is just something in the way. */
+.comic__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid var(--color-ink-line);
+  background: rgba(10, 11, 14, 0.72);
+  color: var(--color-paper);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+
+  transition: background-color 0.18s ease, opacity 0.18s ease;
+}
+
+.comic__arrow:hover:not(:disabled) {
+  background: var(--color-action-red);
+}
+
+/* Disabled rather than hidden at the ends. A control that vanishes
+   makes the reader wonder what they did; a dimmed one says plainly that
+   there is nothing that way. The next arrow going quiet IS the "come
+   back next week" signal. */
+.comic__arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.comic__arrow--prev {
+  left: var(--space-2);
+}
+
+.comic__arrow--next {
+  right: var(--space-2);
+}
+
+.comic__hint {
+  margin-top: var(--space-3);
+  text-align: center;
+  font-family: var(--font-condensed);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.75rem;
+  color: var(--color-paper-dim);
+}
+
+/* ---- narrow screens ------------------------------------------------
+
+   THE ONE REAL PROBLEM WITH THIS FORMAT.
+
+   A 1000x320 strip shrunk to a 390px phone is 125px tall, and four
+   panels across that width leaves each one about 98px wide. The speech
+   bubbles are unreadable. Scaling down is simply not an option at this
+   aspect ratio.
+
+   So below 760px the slice stops being viewport-width and becomes
+   60vh TALL instead, which makes it far wider than the screen. You
+   scroll through the panels of one slice and then on into the next.
+
+   Snapping drops to `proximity` here on purpose: `mandatory` on an item
+   wider than the viewport fights the reader, because the browser keeps
+   pulling the scroll back to a snap point they are trying to scroll
+   past. `proximity` only snaps when you let go near one. */
+@media (max-width: 760px) {
+  .comic__track {
+    scroll-snap-type: x proximity;
+  }
+
+  .comic__panel {
+    flex: 0 0 auto;
+  }
+
+  .comic__image {
+    width: auto;
+    height: 60vh;
+    max-height: 420px;
+  }
+
+  .comic__arrow {
+    display: none;
+  }
+}
+
+/* Someone who asked for less movement still gets the arrows, they just
+   jump instead of gliding. scroll-behavior is the only motion here. */
+@media (prefers-reduced-motion: reduce) {
+  .comic__track {
+    scroll-behavior: auto;
+  }
+}

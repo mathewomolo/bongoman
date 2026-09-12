@@ -379,3 +379,27 @@
     width: min(94vw, 640px);
   }
 }
+
+/* ---- mobile resets for the three big fixed offsets -----------------
+
+   The 640px query above moves the backdrop but leaves --head-drop and
+   --track-pad-top at their desktop values, which is what was going
+   wrong on a phone: the heading was still being pushed 170px down the
+   page, the row was still pulling itself 130px back up to meet it, and
+   the backdrop at `top: 60px` ended up directly behind the heading and
+   its paragraph. The head has z-index 2 so the words won, but they were
+   words sitting on an illustration with nothing between them.
+
+   Those numbers were chosen against a 1400px screen. They are not
+   wrong, they are just desktop numbers, so the phone gets its own. */
+@media (max-width: 640px) {
+  .catalogue__row {
+    /* No drop at all. On a phone there is no wide empty band to fill,
+       so the heading just sits where it falls. */
+    --head-drop: 0px;
+
+    /* Still headroom for the backdrop to stand in, but 140 rather than
+       220, because 220px of empty space is a third of a phone screen. */
+    --track-pad-top: 140px;
+  }
+}
