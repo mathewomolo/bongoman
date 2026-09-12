@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import LoopingClip from "./LoopingClip.jsx";
 import "./Game.css";
 
 // Verbs pulled straight from the media kit: "runs, jumps, climbs, fights,
@@ -7,95 +8,20 @@ import "./Game.css";
 // list of actions reads as motion, not just a sentence.
 const abilities = ["Run", "Jump", "Climb", "Fight", "Sneak", "Swim", "Explore"];
 
-// PLACEHOLDER: each ability shows a simple stroke pose standing in for a
-// real gameplay GIF of Bongoman performing that action, since no capture
-// footage exists yet. Once real GIFs are ready, replace AbilityPose's
-// switch below with an <img> or <video> per key. Poses share Story.jsx's
-// stick-figure style (circle head, stroked limbs, same viewBox) so the
-// placeholder art reads as one consistent set rather than a mismatch.
-function AbilityPose({ pose }) {
-  const stroke = { stroke: "#ffffff", strokeWidth: 10, strokeLinecap: "round" };
-  switch (pose) {
-    case "Jump":
-      return (
-        <svg viewBox="0 0 200 320" fill="none" aria-hidden="true">
-          <circle cx="100" cy="60" r="36" {...stroke} />
-          <path d="M100 96 L100 190" {...stroke} />
-          <path d="M100 120 L45 80" {...stroke} />
-          <path d="M100 120 L155 80" {...stroke} />
-          <path d="M100 190 L70 260" {...stroke} />
-          <path d="M100 190 L130 250" {...stroke} />
-        </svg>
-      );
-    case "Climb":
-      return (
-        <svg viewBox="0 0 200 320" fill="none" aria-hidden="true">
-          <circle cx="110" cy="60" r="36" {...stroke} />
-          <path d="M110 96 L95 190" {...stroke} />
-          <path d="M95 130 L150 50" {...stroke} />
-          <path d="M95 130 L40 150" {...stroke} />
-          <path d="M95 190 L50 220" {...stroke} />
-          <path d="M95 190 L120 270" {...stroke} />
-        </svg>
-      );
-    case "Fight":
-      return (
-        <svg viewBox="0 0 200 320" fill="none" aria-hidden="true">
-          <circle cx="80" cy="60" r="36" {...stroke} />
-          <path d="M80 96 L85 190" {...stroke} />
-          <path d="M85 130 L170 110" {...stroke} />
-          <path d="M85 130 L30 170" {...stroke} />
-          <path d="M85 190 L55 270" {...stroke} />
-          <path d="M85 190 L120 260" {...stroke} />
-        </svg>
-      );
-    case "Sneak":
-      return (
-        <svg viewBox="0 0 200 320" fill="none" aria-hidden="true">
-          <circle cx="130" cy="110" r="34" {...stroke} />
-          <path d="M130 144 L90 190" {...stroke} />
-          <path d="M90 165 L150 155" {...stroke} />
-          <path d="M90 165 L40 190" {...stroke} />
-          <path d="M90 190 L60 240" {...stroke} />
-          <path d="M90 190 L130 250" {...stroke} />
-        </svg>
-      );
-    case "Swim":
-      return (
-        <svg viewBox="0 0 200 320" fill="none" aria-hidden="true">
-          <circle cx="150" cy="140" r="32" {...stroke} />
-          <path d="M150 172 L90 180" {...stroke} />
-          <path d="M90 180 L20 140" {...stroke} />
-          <path d="M90 180 L30 220" {...stroke} />
-          <path d="M90 180 L40 235" {...stroke} />
-          <path d="M90 180 L20 245" {...stroke} />
-        </svg>
-      );
-    case "Explore":
-      return (
-        <svg viewBox="0 0 200 320" fill="none" aria-hidden="true">
-          <circle cx="90" cy="60" r="36" {...stroke} />
-          <path d="M90 96 L90 190" {...stroke} />
-          <path d="M90 120 L140 70" {...stroke} />
-          <path d="M90 120 L40 140" {...stroke} />
-          <path d="M90 190 L60 270" {...stroke} />
-          <path d="M90 190 L120 270" {...stroke} />
-        </svg>
-      );
-    default:
-      // Run
-      return (
-        <svg viewBox="0 0 200 320" fill="none" aria-hidden="true">
-          <circle cx="90" cy="55" r="38" {...stroke} />
-          <path d="M90 92 L70 180" {...stroke} />
-          <path d="M70 130 L20 170" {...stroke} />
-          <path d="M70 130 L140 110" {...stroke} />
-          <path d="M70 180 L40 280" {...stroke} />
-          <path d="M70 180 L130 260" {...stroke} />
-        </svg>
-      );
-  }
-}
+// The clip filename is derived from the ability rather than stored in a
+// separate list, the same pattern the ebook catalogue uses for its covers.
+// One source of truth: rename an ability above and you rename one file.
+//
+// PLACEHOLDER: labelled two second loops in public/images/game-abilities/,
+// H.264, 600x600, silent. Real gameplay clips drop in at the same names.
+//
+// MP4 rather than an animated image was a deliberate choice: H.264 does
+// real motion compensation between frames, so it is far smaller than GIF
+// or WebP once a clip runs past a second or two. The cost is that video
+// has no usable transparency on the web. VP9-with-alpha fails on Safari
+// and HEVC-with-alpha fails on Chrome, so there is no one file that works
+// everywhere. Whatever background is baked into the clip is what shows.
+const clipFor = (ability) => `/images/game-abilities/${ability.toLowerCase()}.mp4`;
 
 const gridVariants = {
   hidden: {},
@@ -208,7 +134,23 @@ export default function Game() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.25, ease: "easeOut" }}
                 >
-                  <AbilityPose pose={active} />
+                  {/* Keyed on `active` by its parent, so each tab change
+                      tears this element down and builds a new one. That is
+                      what makes a clip start from its first frame rather
+                      than picking up wherever the previous one was.
+
+                      Every attribute a self-playing video needs, and the
+                      React `muted` gotcha that goes with them, lives in
+                      LoopingClip rather than being spelled out twice.
+
+                      No `alt` equivalent is needed: the ability name is
+                      already on screen as text directly below the frame. */}
+                  <LoopingClip
+                    className="game__stage-clip"
+                    src={clipFor(active)}
+                    width="600"
+                    height="600"
+                  />
                 </motion.div>
               </AnimatePresence>
             </div>

@@ -107,14 +107,39 @@
   overflow: hidden;
 }
 
+/* Was 60% wide, sized around a stroked SVG that had its own generous
+   internal margins. A real clip fills its own frame, so this now fills
+   the panel and the clip decides its own padding. */
 .game__stage-pose {
-  width: 60%;
+  width: 100%;
+  height: 100%;
 }
 
-.game__stage-pose svg {
+/* `contain` rather than `cover`, deliberately. The placeholders are
+   square and the panel is square, so today it makes no difference. It
+   matters the day a real clip comes out at some other ratio: contain
+   fits the whole thing inside and letterboxes against the panel's tint,
+   cover would crop it, and cropping a character is how you lose his feet
+   without noticing.
+
+   Video has no usable transparency on the web, so whatever background is
+   baked into the clip is what you see inside this frame. Letterbox bars
+   land on the panel tint below, which is why that tint is worth keeping.
+
+   Under prefers-reduced-motion the element gains native controls, and a
+   control bar on a 260px panel is cramped. It is the honest trade for
+   still being able to watch the clip, so it stays. */
+.game__stage-clip {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: contain;
+
+  /* Stops the browser painting its own black box in the moment between
+     the element mounting and the first frame decoding. The panel's own
+     tint shows through that gap instead of a flash of black on every
+     tab change. */
+  background: transparent;
 }
 
 .game__stage-label {

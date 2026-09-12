@@ -1,0 +1,30 @@
+BONGOMAN origin story portraits
+===============================
+
+kham.png    350 x 350   James "Kham" Kamawira, on the 1989 panel
+mathew.png  350 x 350   Mathew Omolo, on the Now panel
+
+Unzip so the paths become:
+
+  public/images/story/kham.png
+  public/images/story/mathew.png
+
+Same folder as story-1.mp4 and story-2.mp4, since both belong to this
+section.
+
+REPLACING THEM
+--------------
+
+Square, and displayed around 175px wide, so 350 is already a 2x source.
+Real photographs are worth more here than illustrations: this section is
+the claim that two actual people made this, and a photograph is the
+evidence.
+
+The portrait overhangs the top corner of its panel, so it is CROPPED to a
+square with `object-fit: cover`. Frame the face centrally and leave a
+little air around it, or the crop will take an ear.
+
+They mirror each other: Kham's sits over the top left of the left panel,
+Mathew's over the top right of the right panel. Shoot or crop them with
+the same framing distance so the pair reads as one set rather than two
+unrelated pictures.

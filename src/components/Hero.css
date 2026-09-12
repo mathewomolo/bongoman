@@ -7,56 +7,101 @@
   isolation: isolate;
 }
 
-.hero__sky {
+/* ---- 0. the stationary plate ---------------------------------------
+
+   Was .hero__sky, a pair of gradients. Renamed to match the file that
+   now backs it, because a class called sky and a file called plate is
+   one more thing to hold in your head while debugging a stack.
+
+   The gradients are kept UNDER the image rather than deleted. The
+   placeholder is opaque so they never show, but the moment a real plate
+   with any transparency goes in, the old sky is still there behind it
+   instead of a black rectangle. */
+.hero__plate {
   position: absolute;
   inset: 0;
-  background:
+  z-index: 0;
+
+  background-image:
+    url("/images/hero/hero-plate.png"),
     radial-gradient(120% 90% at 50% 0%, rgba(242, 169, 59, 0.16), transparent 60%),
     linear-gradient(180deg, var(--color-ink) 0%, var(--color-ink) 55%, var(--color-ink-soft) 100%);
-  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
+/* ---- 1. texture ----------------------------------------------------
+
+   Dropped to its own layer below the sun. It used to share z-index 1
+   with .hero__sun, which meant document order decided which painted on
+   top rather than this file deciding. Down here it textures the plate
+   and leaves the carousel art clean. */
 .hero__halftone {
   color: var(--color-paper);
   opacity: 0.05;
   z-index: 1;
 }
 
+/* ---- 2. the sun ----------------------------------------------------
+
+   Now BEHIND the carousel rather than in front of the old skyline. That
+   is the change the whole section was rebuilt for: a sun with nothing
+   behind it and nothing in front of it is a gold disc, not a sun. */
 .hero__sun {
   position: absolute;
   top: 6%;
   left: 50%;
   width: min(46vw, 480px);
   transform: translateX(-50%);
-  z-index: 1;
+  z-index: 2;
   filter: blur(0.5px);
 }
 
-.hero__birds {
-  position: absolute;
-  top: 14%;
-  left: 8%;
-  width: min(24vw, 220px);
-  z-index: 2;
-}
+/* ---- 3. the carousel ----------------------------------------------
 
-.hero__skyline {
+   WHY THE BOTTOM IS NEGATIVE.
+
+   This layer travels 140px upward on scroll (see carouselY). Pinned at
+   bottom: 0 it would drag a 140px strip of nothing up into the frame
+   with it, and .hero__ground is only 14% tall, which on a short laptop
+   viewport is less than 140px and would not cover it.
+
+   180px of overhang is the travel plus margin. The art runs off the
+   bottom of the screen instead, which is what a skyline should do
+   anyway. */
+.hero__carousel {
   position: absolute;
+  top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
-  height: clamp(160px, 32vh, 320px);
+  bottom: -180px;
   z-index: 3;
-  overflow: hidden;
-  line-height: 0;
+  pointer-events: none;
 }
 
-.hero__skyline svg {
+.hero__slide {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  display: block;
+
+  /* cover, so the frame is always filled. The three sources are 16:9 and
+     the hero is taller than that on a phone, so something has to give and
+     letterbox bars either side would be worse than a crop. */
+  object-fit: cover;
+
+  /* Anchored to the bottom of this box. The interesting half of a
+     skyline is its roofline, and cropping from the top only ever eats
+     empty sky. */
+  object-position: center bottom;
 }
 
+/* ---- 4. the fade into the next section -----------------------------
+
+   Sits ABOVE the carousel on purpose. Its whole job is to blend the
+   bottom edge of whatever is behind it into the ink of the section
+   below, and it cannot do that from underneath the art. */
 .hero__ground {
   position: absolute;
   left: 0;
@@ -67,9 +112,21 @@
   z-index: 4;
 }
 
+/* ---- 5. birds ------------------------------------------------------
+
+   The fastest layer, so the nearest, so the top of the art stack. Still
+   drawn SVG, which already has the alpha this position needs. */
+.hero__birds {
+  position: absolute;
+  top: 14%;
+  left: 8%;
+  width: min(24vw, 220px);
+  z-index: 5;
+}
+
 .hero__content {
   position: relative;
-  z-index: 5;
+  z-index: 6;
   width: 100%;
 }
 
@@ -113,12 +170,60 @@
   margin-top: var(--space-2);
 }
 
+/* ---- 7. the indicators ---------------------------------------------
+
+   Bottom right. The scroll cue owns bottom centre and the two would
+   have overlapped there.
+
+   Outside .hero__content deliberately: that block fades to opacity 0 by
+   70% of the scroll, and controls that fade out from under the pointer
+   are worse than controls that stay. */
+.hero__dots {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  z-index: 7;
+  display: flex;
+  gap: 10px;
+}
+
+.hero__dot {
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--color-paper-dim);
+  background: transparent;
+  cursor: pointer;
+
+  /* Not `transform`. These sit next to each other and a scaling dot
+     shifts its neighbours' apparent spacing, which reads as the row
+     twitching every six seconds. */
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.hero__dot:hover {
+  border-color: var(--color-paper);
+}
+
+.hero__dot--active {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+}
+
+/* A visible focus ring, because these are real buttons and somebody
+   tabbing through should be able to see where they are. */
+.hero__dot:focus-visible {
+  outline: 2px solid var(--color-paper);
+  outline-offset: 3px;
+}
+
 .hero__scrollcue {
   position: absolute;
   bottom: var(--space-3);
   left: 50%;
   transform: translateX(-50%);
-  z-index: 6;
+  z-index: 8;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -136,5 +241,14 @@
   }
   .hero__sun {
     width: 60vw;
+  }
+
+  /* The dots move up above the scroll cue rather than shrinking. At this
+     width the cue's text is wide enough to reach the right edge, so
+     sharing the bottom row is no longer possible however small they get. */
+  .hero__dots {
+    right: 50%;
+    bottom: calc(var(--space-3) + 46px);
+    transform: translateX(50%);
   }
 }

@@ -18,14 +18,17 @@
   height: auto;
 }
 
+/* Were at 70% and 84%, which put them exactly where the two clips now
+   sit. Moved up so they float beside the 1989/Now panels instead. They
+   still parallax over the same distance, they just start higher. */
 .story__figure--left {
   left: 16px;
-  top: 70%;
+  top: 34%;
 }
 
 .story__figure--right {
   right: 16px;
-  top: 84%;
+  top: 46%;
 }
 
 /* The text column (.container) is capped at --container-width (1180px)
@@ -69,11 +72,43 @@
   }
 }
 
+/* HOW NARROW THE COPY RUNS INSIDE EACH CARD.
+
+   The portrait overhangs the top corner and covers roughly 140px of the
+   card's inner width. Left at full width the first two lines ran behind
+   it. Capping the column and pushing it to the far side from the
+   portrait clears it with nothing overlapping.
+
+   One number. Widen it and the top lines start to disappear behind the
+   photograph again. */
+.story__panels {
+  --panel-text-width: 42ch;
+}
+
+/* The panel is now a wrapper, not the card. It holds the portrait, which
+   overhangs the top corner, so it must NOT clip. The card itself moved
+   to .story__panel-body below, which keeps the clipping. */
 .story__panel {
   position: relative;
+  overflow: visible;
+
+  /* Room for the portrait to hang above the card without the grid row
+     cropping it. */
+  padding-top: var(--space-4);
+}
+
+.story__panel-body {
+  position: relative;
   padding: var(--space-4) var(--space-3) var(--space-3);
+  /* Kept so nothing inside the card can escape its rounded corners. It
+     used to exist for the giant year watermark that bled off the top
+     edge; that is gone, this is now just tidiness. */
   overflow: hidden;
   border-radius: 4px;
+
+  /* The card lifts on hover. Listed here so both variants inherit the
+     timing and only the shadow colour differs below. */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .story__panel p {
@@ -83,16 +118,70 @@
   line-height: 1.6;
 }
 
-.story__panel-year {
+/* ---- The two portraits --------------------------------------------
+
+   They sit on the wrapper rather than inside the card, so they can
+   overlap its top corner. z-index puts them above the card, and the
+   mirrored offsets match the panels' own opposite rotations so the pair
+   reads as a spread rather than two copies of one idea. */
+.story__portrait {
   position: absolute;
-  top: -0.35em;
-  right: 0.4em;
-  font-family: var(--font-display);
-  font-size: clamp(4rem, 10vw, 6rem);
-  line-height: 1;
-  opacity: 0.12;
-  pointer-events: none;
-  z-index: 0;
+  top: 0;
+  z-index: 2;
+
+  /* Source files are 350px square, so this is already a 2x asset at its
+     largest. It only ever shrinks. */
+  width: clamp(110px, 30%, 175px);
+  aspect-ratio: 1 / 1;
+  height: auto;
+
+  /* Square frame, so a photograph that is not square crops rather than
+     squashing a face. Frame faces centrally when the real ones are
+     taken, or the crop takes an ear. */
+  object-fit: cover;
+
+  border-radius: 4px;
+  border: 3px solid var(--color-ink-line);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.4);
+  /* Opaque, so the card behind never shows through while the image is
+     still loading. */
+  background: var(--color-ink);
+
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.story__portrait--left {
+  left: 0;
+  transform: translateX(-8%) rotate(-3deg);
+}
+
+.story__portrait--right {
+  right: 0;
+  transform: translateX(8%) rotate(3deg);
+  /* Gold to match its panel's border, the way the left one's ink border
+     matches the paper card. */
+  border-color: var(--color-gold);
+}
+
+/* On hover the photograph straightens and lifts, like picking one up off
+   a desk. The tilt going to zero is what sells it: growing alone reads
+   as a generic hover, losing the tilt reads as the thing responding.
+
+   The translateX has to be repeated in every one of these. transform is
+   a single property, so a bare `rotate(0) scale(...)` here would drop the
+   offset and the photograph would jump sideways the instant you touched
+   it. */
+.story__portrait--left:hover,
+.story__portrait--right:hover {
+  box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.5);
+}
+
+.story__portrait--left:hover {
+  transform: translateX(-8%) rotate(0deg) scale(1.06);
+}
+
+.story__portrait--right:hover {
+  transform: translateX(8%) rotate(0deg) scale(1.06);
 }
 
 .story__panel-label {
@@ -106,30 +195,55 @@
   margin-bottom: var(--space-2);
 }
 
-.story__panel--page {
+.story__panel--page .story__panel-body {
   background: var(--color-paper);
   color: var(--color-ink);
   border: 3px solid var(--color-ink);
   box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.35);
+
+  /* Kham's photograph hangs off the top LEFT, so the copy runs to the
+     right, away from it. */
+  text-align: right;
 }
 
-.story__panel--page .story__panel-year {
-  color: var(--color-ink);
+.story__panel--page .story__panel-label,
+.story__panel--page .story__panel-body p {
+  max-width: var(--panel-text-width);
+  /* auto on the left is what pushes a capped block to the far side. */
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.story__panel--page:hover .story__panel-body {
+  transform: translate(-3px, -3px);
+  box-shadow: 15px 15px 0 rgba(0, 0, 0, 0.35);
 }
 
 .story__panel--page .story__panel-label {
   color: var(--color-action-red);
 }
 
-.story__panel--play {
+.story__panel--play .story__panel-body {
   background: linear-gradient(160deg, var(--color-ink-soft), var(--color-ink));
   color: var(--color-paper);
   border: 3px solid var(--color-gold);
   box-shadow: 10px 10px 0 rgba(242, 169, 59, 0.18);
+
+  /* Mathew's photograph hangs off the top RIGHT, so this one mirrors it
+     and runs left. */
+  text-align: left;
 }
 
-.story__panel--play .story__panel-year {
-  color: var(--color-gold);
+.story__panel--play .story__panel-label,
+.story__panel--play .story__panel-body p {
+  max-width: var(--panel-text-width);
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.story__panel--play:hover .story__panel-body {
+  transform: translate(-3px, -3px);
+  box-shadow: 15px 15px 0 rgba(242, 169, 59, 0.3);
 }
 
 .story__panel--play .story__panel-label {
@@ -141,7 +255,10 @@
 }
 
 .story__quote {
-  margin: var(--space-6) auto 0;
+  /* Was var(--space-6). The finale row now owns the gap above this
+     block, so a second large margin here just pushed the copy out of
+     line with the two clips it is meant to sit between. */
+  margin: 0 auto;
   max-width: 22ch;
   text-align: center;
   font-family: var(--font-display);
@@ -159,9 +276,124 @@
   line-height: 1.6;
 }
 
+/* ---- The closing line, flanked by two clips -------------------------
+
+   This row sits OUTSIDE .container on purpose. The container caps at
+   1180px, and two 500px clips plus a readable column of text does not
+   fit inside that. So this gets its own wider bound and its own padding.
+
+   Three grid columns rather than absolute positioning: the clips are
+   real content with real height, so the row should grow to fit them
+   rather than have them float over whatever is underneath. */
+.story__finale {
+  display: grid;
+  grid-template-columns: minmax(0, 500px) minmax(0, 620px) minmax(0, 500px);
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-4);
+
+  max-width: 1700px;
+  margin: var(--space-6) auto 0;
+  padding-inline: var(--space-3);
+
+  /* Above the floating figures, which pass through this band on their
+     way up the section. */
+  position: relative;
+  z-index: 1;
+}
+
+.story__finale-text {
+  text-align: center;
+}
+
+.story__clip {
+  /* The wrapper carries the entrance animation, the video inside carries
+     the frame. Separating them means the border and the slide are not
+     fighting over the same transform. */
+  width: 100%;
+}
+
+.story__clip-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+
+  /* `cover`, not `contain`. These two are decorative and sit either side
+     of the copy, so filling their box matters more than showing every
+     pixel. A real clip that is not square crops rather than leaving
+     bars, which would break the pair's symmetry. */
+  object-fit: cover;
+
+  border-radius: 6px;
+  border: 3px solid var(--color-gold);
+  /* Stops the browser painting its own black box between the element
+     mounting and the first frame decoding. */
+  background: transparent;
+}
+
+/* Both sides are stated rather than leaving the left one to inherit a
+   default and only overriding the right. Two explicit rules make the
+   pair obviously deliberate, and stop `--left` looking like a class
+   somebody forgot to write a rule for.
+
+   The offsets mirror each other and the accents differ, so the two read
+   as a spread rather than as two copies of the same card. */
+.story__clip--left .story__clip-video {
+  border-color: var(--color-gold);
+  box-shadow: 10px 10px 0 rgba(242, 169, 59, 0.18);
+}
+
+.story__clip--right .story__clip-video {
+  border-color: var(--color-action-red);
+  box-shadow: -10px 10px 0 rgba(226, 62, 68, 0.18);
+}
+
+/* Between the two breakpoints the clips would squeeze the text column to
+   nothing, so they give up width first. */
+@media (max-width: 1180px) {
+  .story__finale {
+    grid-template-columns: minmax(0, 300px) minmax(0, 1fr) minmax(0, 300px);
+    gap: var(--space-3);
+  }
+}
+
+/* Stacked: clip, copy, clip. Both are kept rather than dropping the
+   second, because they are a pair and one alone reads as a mistake.
+   They cost nothing until reached: LoopingClip sets `preload="none"`,
+   so a clip below the fold is not fetched until it scrolls into view. */
+@media (max-width: 860px) {
+  .story__finale {
+    grid-template-columns: minmax(0, 420px);
+    gap: var(--space-4);
+    margin-top: var(--space-5);
+  }
+}
+
 @media (max-width: 640px) {
   .story__panel--page,
   .story__panel--play {
     transform: none !important;
+  }
+
+  /* The overhang needs more of the card's width at this size than a
+     percentage gives it, and the tilt stops reading once the card is
+     this narrow. */
+  .story__portrait {
+    width: clamp(96px, 34%, 130px);
+  }
+
+  .story__portrait--left,
+  .story__portrait--right {
+    transform: none;
+  }
+
+  /* Full width again. At this size the cards are narrow enough that a
+     capped column would leave the copy looking stranded. */
+  .story__panel--page .story__panel-label,
+  .story__panel--page .story__panel-body p,
+  .story__panel--play .story__panel-label,
+  .story__panel--play .story__panel-body p {
+    max-width: none;
   }
 }

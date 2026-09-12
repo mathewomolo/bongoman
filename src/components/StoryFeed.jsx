@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ITEM_DURATION, STORIES } from "../data/stories.js";
+import Trailer from "./Trailer.jsx";
 import "./StoryFeed.css";
 
 // One frame of a story: a photo, a clip, or a plain coloured panel.
@@ -253,74 +254,78 @@ export default function StoryFeed() {
 
   return (
     <section className="storyfeed" id="feed">
-      <div className="container">
-        <motion.p
-          className="eyebrow storyfeed__eyebrow"
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.5 }}
-        >
-          The Feed
-        </motion.p>
+      <div className="container storyfeed__layout">
+        <div className="storyfeed__intro">
+          <motion.p
+            className="eyebrow storyfeed__eyebrow"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5 }}
+          >
+            The Feed
+          </motion.p>
 
-        <motion.h2
-          className="storyfeed__heading"
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.5, delay: 0.05 }}
-        >
-          Straight from the desk.
-        </motion.h2>
+          <motion.h2
+            className="storyfeed__heading"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.05 }}
+          >
+            Straight from the desk.
+          </motion.h2>
 
-        <motion.p
-          className="storyfeed__sub"
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          Pages from the books, shots from the game, and whatever else is on the table this
-          week. Tap through. It changes.
-        </motion.p>
+          <motion.p
+            className="storyfeed__sub"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            Pages from the books, shots from the game, and whatever else is on the table this
+            week. Tap through. It changes.
+          </motion.p>
 
-        <motion.ul
-          className="storyfeed__tray"
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.2 }}
-          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
-        >
-          {STORIES.map((story, i) => (
-            <motion.li
-              key={story.id}
-              variants={{
-                hidden: { opacity: 0, y: 20, scale: 0.85 },
-                show: {
-                  opacity: 1,
-                  y: 0,
-                  scale: 1,
-                  transition: { type: "spring", stiffness: 300, damping: 18 },
-                },
-              }}
-            >
-              <button
-                type="button"
-                className={`storyring${seen.has(story.id) ? " storyring--seen" : ""}`}
-                onClick={() => open(i)}
-                aria-label={`Open ${story.label}, ${story.items.length} item${story.items.length === 1 ? "" : "s"}`}
+          <motion.ul
+            className="storyfeed__tray"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
+          >
+            {STORIES.map((story, i) => (
+              <motion.li
+                key={story.id}
+                variants={{
+                  hidden: { opacity: 0, y: 20, scale: 0.85 },
+                  show: {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    transition: { type: "spring", stiffness: 300, damping: 18 },
+                  },
+                }}
               >
-                <span className="storyring__ring">
-                  <span className="storyring__inner" style={{ background: story.tint }}>
-                    {story.cover && <img src={story.cover} alt="" loading="lazy" />}
+                <button
+                  type="button"
+                  className={`storyring${seen.has(story.id) ? " storyring--seen" : ""}`}
+                  onClick={() => open(i)}
+                  aria-label={`Open ${story.label}, ${story.items.length} item${story.items.length === 1 ? "" : "s"}`}
+                >
+                  <span className="storyring__ring">
+                    <span className="storyring__inner" style={{ background: story.tint }}>
+                      {story.cover && <img src={story.cover} alt="" loading="lazy" />}
+                    </span>
                   </span>
-                </span>
-                <span className="storyring__label">{story.label}</span>
-              </button>
-            </motion.li>
-          ))}
-        </motion.ul>
+                  <span className="storyring__label">{story.label}</span>
+                </button>
+              </motion.li>
+            ))}
+          </motion.ul>
+        </div>
+
+        <Trailer />
       </div>
 
       {/* A constant key on purpose: the viewer fades in when it opens

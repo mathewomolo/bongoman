@@ -3,6 +3,10 @@ import StoreButtons from "./StoreButtons.jsx";
 import SocialLinks from "./SocialLinks.jsx";
 import "./Cta.css";
 
+// The site footer used to be the last thing in this file. It moved to
+// Footer.jsx, because a footer nested inside a section renders wherever
+// that section renders, and the moment the merchandise marquee was added
+// after the CTA the footer ended up in the middle of the page.
 export default function Cta() {
   return (
     <section className="cta" id="join">
@@ -64,13 +68,6 @@ export default function Cta() {
           <SocialLinks />
         </motion.div>
       </div>
-
-      <footer className="cta__footer">
-        <div className="container cta__footer-inner">
-          <span>BONGOMAN, created by James &ldquo;Kham&rdquo; Kamawira. Developed by Mathew Omolo.</span>
-          <span>© 2026 BONGOMAN. All rights reserved.</span>
-        </div>
-      </footer>
     </section>
   );
 }

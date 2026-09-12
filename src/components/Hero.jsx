@@ -1,12 +1,52 @@
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import StoreButtons from "./StoreButtons.jsx";
 import "./Hero.css";
 
-// PLACEHOLDER: every shape below (Sun, Skyline, Birds) is a stand-in
-// built from CSS/SVG, used to prove out the parallax scroll feel before
-// real art exists. Swap <Skyline />, <Sun />, and <Birds /> for illustrated
-// or exported layers later; the scroll-linked motion wiring stays the same.
+/* ---------------------------------------------------------------
+   THE LAYER STACK, BACK TO FRONT
+
+     hero__plate      hero-plate.png, opaque, never moves
+     hero__halftone   comic dot texture over the plate only
+     hero__sun        drawn, parallax -60
+     hero__carousel   three skyline PNGs, parallax -140
+     hero__ground     fade into the next section
+     hero__birds      drawn, parallax -220
+     hero__content    copy and store buttons
+     hero__dots       carousel indicators
+     hero__scrollcue
+
+   The carousel paints ABOVE the sun, which is the whole reason the
+   three files are PNG. Everything above the roofline in them is
+   genuinely transparent; an opaque pixel up there erases the sun.
+
+   The code-drawn <Skyline /> that used to live here is gone. The
+   carousel images are its replacement, so keeping it would have put
+   two cities in the same band.
+   --------------------------------------------------------------- */
+
+// PLACEHOLDER: three labelled 2400x1350 stand-ins in public/images/hero/.
+// Real skyline art drops in at the same names with no code change.
+//
+// Two things the real art has to honour, learned from compositing the
+// placeholders against the sun:
+//   1. Keep the tallest roofline at roughly the same height in all three.
+//      A crossfade between skylines of different overall height reads as
+//      the city jumping rather than the scene changing.
+//   2. Keep the subject in the middle 60%. These are 16:9 and the hero is
+//      taller than that on a phone, so object-fit crops the sides.
+const SLIDES = [
+  "/images/hero/hero-01.png",
+  "/images/hero/hero-02.png",
+  "/images/hero/hero-03.png",
+];
+
+// How long each frame holds before advancing.
+const SLIDE_MS = 6000;
+
+// PLACEHOLDER: Sun and Birds are still drawn rather than illustrated.
+// Both are SVG, so both already have the alpha the layering depends on.
+// Swap them for exported art later; the motion wiring does not change.
 
 function Sun() {
   return (
@@ -19,61 +59,6 @@ function Sun() {
           <stop offset="100%" stopColor="var(--color-action-red)" stopOpacity="0.15" />
         </radialGradient>
       </defs>
-    </svg>
-  );
-}
-
-function Skyline() {
-  // Rough Nairobi-ish skyline silhouette: varied building blocks.
-  const buildings = [
-    { x: 0, w: 60, h: 140 },
-    { x: 55, w: 40, h: 210 },
-    { x: 90, w: 70, h: 170 },
-    { x: 155, w: 45, h: 260 },
-    { x: 195, w: 55, h: 190 },
-    { x: 245, w: 35, h: 230 },
-    { x: 275, w: 65, h: 150 },
-    { x: 335, w: 50, h: 200 },
-    { x: 380, w: 40, h: 165 },
-    { x: 415, w: 60, h: 220 },
-    { x: 470, w: 45, h: 180 },
-    { x: 510, w: 70, h: 240 },
-    { x: 575, w: 40, h: 160 },
-  ];
-  return (
-    <svg viewBox="0 0 620 280" preserveAspectRatio="none" aria-hidden="true">
-      {buildings.map((b, i) => (
-        <rect
-          key={i}
-          x={b.x}
-          y={280 - b.h}
-          width={b.w}
-          height={b.h}
-          fill="#2a2129"
-          stroke="rgba(242, 169, 59, 0.22)"
-          strokeWidth="1"
-        />
-      ))}
-      {/* Lit windows were picked with Math.random() during render, which
-          meant every re-render of this component dealt a fresh hand and
-          the whole skyline flickered. A cheap deterministic hash of the
-          building and row index gives the same scattered look while
-          staying identical on every render. */}
-      {buildings.map((b, i) =>
-        Array.from({ length: Math.floor(b.h / 26) }).map((_, r) =>
-          (i * 7 + r * 13) % 5 > 1 ? (
-            <rect
-              key={`${i}-${r}`}
-              x={b.x + b.w / 2 - 4}
-              y={280 - b.h + 14 + r * 26}
-              width="6"
-              height="8"
-              fill="var(--color-gold)"
-              opacity="0.85"
-            />
-          ) : null
-        )
-      )}
     </svg>
   );
 }
@@ -109,29 +94,86 @@ export default function Hero() {
   });
 
   const sunY = useTransform(scrollYProgress, [0, 1], [0, -60]);
-  const skylineY = useTransform(scrollYProgress, [0, 1], [0, -140]);
+  // The carousel inherits the old skyline's rate because it IS the
+  // skyline now. Keeping -140 keeps the depth relationship between sun,
+  // city and birds exactly as it already reads.
+  const carouselY = useTransform(scrollYProgress, [0, 1], [0, -140]);
   const birdsY = useTransform(scrollYProgress, [0, 1], [0, -220]);
   const titleY = useTransform(scrollYProgress, [0, 1], [0, 90]);
   const contentOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
 
+  const reduceMotion = useReducedMotion();
+  const [slide, setSlide] = useState(0);
+
+  // setTimeout keyed on `slide`, not setInterval. With an interval, a
+  // click on the third dot could be followed a quarter second later by an
+  // auto-advance that was already in flight. Re-arming a timeout every
+  // time the slide changes means every frame gets its full dwell,
+  // including one the visitor chose.
+  //
+  // The updater is a function of the previous value rather than reading
+  // `slide` from the closure. That is the same rule the story feed
+  // needed: React runs updaters more than once in dev StrictMode, so they
+  // have to be pure.
+  //
+  // There is deliberately no pause-on-hover. The hero is min-height 100vh,
+  // so a pointer resting anywhere in the window while the visitor is at
+  // the top of the page counts as hovering it, and the carousel would
+  // simply never advance on a desktop. Pausing on hover is for a carousel
+  // somebody is reading. This one is scenery.
+  useEffect(() => {
+    if (reduceMotion) return undefined;
+    const id = setTimeout(() => {
+      setSlide((prev) => (prev + 1) % SLIDES.length);
+    }, SLIDE_MS);
+    return () => clearTimeout(id);
+  }, [slide, reduceMotion]);
+
   return (
-    <section className="hero" id="top" ref={sectionRef}>
-      <div className="hero__sky" />
+    <section
+      className="hero"
+      id="top"
+      ref={sectionRef}
+    >
+      <div className="hero__plate" />
       <div className="halftone hero__halftone" />
 
       <motion.div className="hero__sun" style={{ y: sunY }}>
         <Sun />
       </motion.div>
 
-      <motion.div className="hero__birds" style={{ y: birdsY }}>
-        <Birds />
-      </motion.div>
+      <motion.div className="hero__carousel" style={{ y: carouselY }}>
+        {/* All three are mounted at once and crossfaded with opacity,
+            rather than mounting and unmounting the active one through
+            AnimatePresence. Two reasons. The browser fetches all three
+            up front, so the first transition does not flash an empty
+            frame while slide two downloads. And a crossfade needs both
+            images painting simultaneously anyway, which is exactly what
+            two always-mounted elements give you for free.
 
-      <motion.div className="hero__skyline" style={{ y: skylineY }}>
-        <Skyline />
+            initial={false} stops all three animating their opacity in on
+            first paint, which would show the stack briefly stacked. */}
+        {SLIDES.map((src, i) => (
+          <motion.img
+            key={src}
+            className="hero__slide"
+            src={src}
+            alt=""
+            aria-hidden="true"
+            width="2400"
+            height="1350"
+            initial={false}
+            animate={{ opacity: i === slide ? 1 : 0 }}
+            transition={{ duration: reduceMotion ? 0 : 0.7, ease: "easeInOut" }}
+          />
+        ))}
       </motion.div>
 
       <div className="hero__ground" />
+
+      <motion.div className="hero__birds" style={{ y: birdsY }}>
+        <Birds />
+      </motion.div>
 
       <motion.div className="hero__content" style={{ y: titleY, opacity: contentOpacity }}>
         <div className="container hero__inner">
@@ -187,6 +229,27 @@ export default function Hero() {
           </motion.div>
         </div>
       </motion.div>
+
+      {/* Bottom RIGHT, not bottom centre. The scroll cue already owns the
+          centre of that edge and the two would have sat on top of each
+          other.
+
+          A real <button> each rather than a styled div, so the set is
+          reachable by keyboard and announced properly. aria-current tells
+          a screen reader which frame is showing without needing the
+          visual fill. */}
+      <div className="hero__dots">
+        {SLIDES.map((src, i) => (
+          <button
+            key={src}
+            type="button"
+            className={i === slide ? "hero__dot hero__dot--active" : "hero__dot"}
+            aria-label={`Show background ${i + 1} of ${SLIDES.length}`}
+            aria-current={i === slide ? "true" : undefined}
+            onClick={() => setSlide(i)}
+          />
+        ))}
+      </div>
 
       <motion.div
         className="hero__scrollcue"

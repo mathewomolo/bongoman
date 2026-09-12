@@ -1,0 +1,79 @@
+/* The outer element is what the grid column sizes. It takes the whole
+   column up to a ceiling, so on a mid-width desktop the video shrinks
+   rather than squeezing the text beside it to nothing. */
+.trailer {
+  width: 100%;
+  max-width: 700px;
+  margin-inline: auto;
+}
+
+/* RATIO, NOT FIXED PIXELS.
+
+   700 x 390 was the ask, but hard pixels overflow a narrow screen and
+   390 is not actually 16:9 (700 / 16 * 9 is 393.75). aspect-ratio gives
+   the intended shape at every width and lands on 700 x 394 at full size.
+
+   The frame carries the border and the hard offset shadow rather than
+   the iframe, because an iframe going fullscreen takes its own styles
+   with it and a border would follow it onto the black. */
+.trailer__frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+
+  border: 3px solid var(--color-ink-line);
+  border-radius: 6px;
+  box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.4);
+
+  /* Clips the player's square corners to the rounded ones. */
+  overflow: hidden;
+
+  /* Painted before the iframe loads, so the slot does not flash white
+     on a dark page while YouTube's player is still coming down. */
+  background: var(--color-ink-soft);
+}
+
+.trailer__player {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* ---- the stand-in, shown while TRAILER_ID is still a placeholder ----
+
+   Same 16:9 box as the real thing, so the layout it produces is the
+   layout the video will produce. Dashed rather than solid, which is the
+   fastest way to read "not finished" at a glance. */
+.trailer__pending {
+  position: absolute;
+  inset: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  text-align: center;
+  padding: var(--space-2);
+
+  border: 2px dashed rgba(242, 169, 59, 0.5);
+  border-radius: 4px;
+}
+
+.trailer__pending-label {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  line-height: 1;
+  color: var(--color-gold);
+}
+
+.trailer__pending-note {
+  font-family: var(--font-condensed);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--color-paper-dim);
+  max-width: 34ch;
+}

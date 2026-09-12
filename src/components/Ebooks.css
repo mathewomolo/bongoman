@@ -22,6 +22,14 @@
   gap: var(--space-4);
   align-items: center;
   margin-top: var(--space-5);
+
+  /* Same reason as .ebooks__steps below: the catalogue's backdrop is a
+     positioned box and paints over anything static above it. This block
+     is further from the catalogue so it has not been hit yet, but it
+     sits in the same firing line, and one line now beats diagnosing it
+     again at some other viewport width. */
+  position: relative;
+  z-index: 1;
 }
 
 @media (min-width: 780px) {
@@ -59,6 +67,31 @@
   align-items: center;
   gap: var(--space-2);
   margin-top: var(--space-6);
+
+  /* WHY THESE THREE WORDS WERE DISAPPEARING.
+
+     The catalogue's backdrop art is absolutely positioned inside
+     .catalogue__row, and it is tall enough to spill above that row's
+     own top edge. .catalogue__row is a POSITIONED box and this one is
+     static, and the browser always paints positioned boxes after static
+     ones regardless of which comes first in the document. So the art was
+     landing on top of "Read it. Discover it. Play it." and no amount of
+     spacing would have fixed it on its own.
+
+     z-index puts the line back in front. */
+  position: relative;
+  z-index: 1;
+
+  /* And this is the second half, because being in front of the art is
+     not the same as being clear of it. Three words read against an
+     illustration are still hard to read.
+
+     PADDING rather than margin on purpose. .catalogue below already
+     carries `margin-top: var(--space-6)`, and adjacent margins in normal
+     flow collapse into the larger of the two, so a margin-bottom here
+     smaller than that would have done nothing at all and looked like the
+     change had not landed. Padding does not collapse. */
+  padding-bottom: var(--space-4);
 }
 
 .ebooks__step {

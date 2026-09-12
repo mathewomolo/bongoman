@@ -1,0 +1,22 @@
+/* Lifted wholesale from .cta__footer, which no longer exists. The only
+   addition is the background: inside .cta it inherited that section's
+   radial gradient, and out here it has to state its own or it would sit
+   on whatever the page's default is. */
+.sitefooter {
+  position: relative;
+  z-index: 1;
+  background: var(--color-ink);
+  border-top: 1px solid rgba(243, 236, 217, 0.12);
+  padding-block: var(--space-3);
+}
+
+.sitefooter__inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-1);
+  font-family: var(--font-condensed);
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  color: var(--color-paper-dim);
+}

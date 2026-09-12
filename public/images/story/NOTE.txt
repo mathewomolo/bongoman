@@ -1,0 +1,42 @@
+BONGOMAN origin story clips
+===========================
+
+story-1.mp4  story-2.mp4
+
+500 x 500, H.264, 2 seconds, silent, web optimised. Placeholders. They
+animate so you can see at a glance that playback is working, which a
+still frame inside a video tag cannot tell you.
+
+Unzip so the paths become:
+
+  public/images/story/story-1.mp4
+  public/images/story/story-2.mp4
+
+Videos live under images/ rather than a separate folder purely for
+consistency: the ability clips already sit in images/game-abilities/, so
+all media stays in one tree.
+
+EXPORT SETTINGS
+---------------
+
+Same as the ability clips. In HandBrake:
+
+  Summary   MP4, and TICK "Web Optimized". This moves the file index to
+            the front so playback starts after a few kilobytes instead of
+            waiting for the whole file.
+  Video     H.264 (x264), Constant Quality, RF 24 to 28. Start at 26.
+  Audio     REMOVE every track.
+  Size      500 x 500, identical for both.
+
+DRAWING THEM
+------------
+
+These two sit either side of a block of copy, so they are read as a pair.
+Keep them consistent with each other: same framing distance, same light,
+same background treatment. Two clips that disagree look like a mistake
+rather than a pair.
+
+LOOP SEAMLESSLY. Last frame should lead back into the first.
+
+No transparency, same as the ability clips. Whatever background is in the
+clip is what shows. Two to four seconds each.

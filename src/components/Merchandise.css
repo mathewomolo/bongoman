@@ -1,0 +1,164 @@
+.merch {
+  position: relative;
+  padding-block: var(--space-6);
+  background: var(--color-ink-soft);
+
+  /* The rail below is wider than the viewport by design. Without this
+     the page gains a horizontal scrollbar and the whole site can be
+     dragged sideways on a phone. */
+  overflow: hidden;
+}
+
+.merch__eyebrow {
+  color: var(--color-gold);
+}
+
+.merch__heading {
+  margin-top: var(--space-1);
+  font-size: clamp(2rem, 5.5vw, 3.4rem);
+  line-height: 1.05;
+  color: var(--color-paper);
+  max-width: 18ch;
+}
+
+/* ---- the rail ------------------------------------------------------
+
+   THE TWO NUMBERS WORTH TOUCHING, both on this element so they sit
+   together rather than being hunted for:
+
+     --marquee-duration  how long one full pass takes. Higher is slower.
+                         60s over sixteen items is a drift rather than a
+                         scroll, which is what "soft moving" asks for.
+     --fade              how wide the soft edge is at each end.
+
+   The mask is what hides where the loop begins and ends. Without it the
+   items visibly pop into existence at the right edge. Same technique as
+   the story ring tray, for the same reason: a hard cut reads as damage,
+   a fade reads as continuing past the frame. */
+.merch__rail {
+  --marquee-duration: 60s;
+  --fade: clamp(40px, 8vw, 140px);
+
+  margin-top: var(--space-5);
+  overflow: hidden;
+
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--fade),
+    #000 calc(100% - var(--fade)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--fade),
+    #000 calc(100% - var(--fade)),
+    transparent 100%
+  );
+}
+
+/* `width: max-content` is load bearing. A flex row inside a block box
+   would otherwise be capped at the viewport width and the items would
+   compress instead of running off the edge, which kills the loop. */
+.merch__track {
+  display: flex;
+  width: max-content;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  animation: merchScroll var(--marquee-duration) linear infinite;
+}
+
+/* Exactly -50%, because the list is rendered twice. At the end of the
+   pass the second copy is sitting where the first copy started, so the
+   snap back to zero lands on an identical picture. Any other figure and
+   the loop jumps. */
+@keyframes merchScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Stops on hover so somebody can actually look at a product. Safe here
+   in a way it was not in the hero: this is a 350px strip, so a pointer
+   over it is a deliberate act rather than a mouse parked anywhere in the
+   window. */
+.merch__rail:hover .merch__track {
+  animation-play-state: paused;
+}
+
+.merch__item {
+  flex: 0 0 auto;
+  width: clamp(190px, 22vw, 300px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+}
+
+.merch__shot {
+  /* Source files are 300 x 350, so 6 by 7. Declared rather than left to
+     the image, which keeps the row from reflowing as each one loads. */
+  aspect-ratio: 6 / 7;
+  width: 100%;
+
+  border: 3px solid var(--color-ink-line);
+  border-radius: 6px;
+  background: var(--color-ink);
+  overflow: hidden;
+}
+
+.merch__shot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  /* `contain`, not `cover`. The manifest promises the marquee crops
+     nothing, and a cropped mug handle looks like a mistake rather than a
+     crop. Consistent product scale in the source art is what makes this
+     look tidy; this rule only guarantees nothing is lost. */
+  object-fit: contain;
+}
+
+.merch__label {
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.72rem;
+  color: var(--color-paper-dim);
+  text-align: center;
+}
+
+/* ---- reduced motion ------------------------------------------------
+
+   This needs an explicit rule rather than being left to the global one.
+   index.css carries `* { animation-duration: 0.01ms !important }` under
+   this query, which is right for a fade and catastrophic for an infinite
+   linear loop: a 60 second pass compressed to 0.01ms does not stop, it
+   completes thousands of times a second and the strip becomes a
+   vibrating smear.
+
+   So the animation is switched off outright and the rail becomes an
+   ordinary scroll row instead, which still shows all eight products to
+   anyone who wants them. The mask stays, so the edges still fade. */
+@media (prefers-reduced-motion: reduce) {
+  .merch__track {
+    animation: none;
+    transform: none;
+  }
+
+  .merch__rail {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .merch__rail::-webkit-scrollbar {
+    display: none;
+  }
+}

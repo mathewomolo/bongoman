@@ -17,6 +17,11 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
+
+  /* This is now what ends the section. The footer used to sit below it
+     and supply the last band of space; it lives in Footer.css since the
+     footer moved out, so this padding is the only thing between the
+     social links and whatever section comes next. */
   padding-bottom: var(--space-6);
 }
 
@@ -74,23 +79,10 @@
   color: var(--color-paper);
 }
 
-.cta__footer {
-  position: relative;
-  z-index: 1;
-  border-top: 1px solid rgba(243, 236, 217, 0.12);
-  padding-block: var(--space-3);
-}
-
-.cta__footer-inner {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: var(--space-1);
-  font-family: var(--font-condensed);
-  font-size: 0.8rem;
-  letter-spacing: 0.03em;
-  color: var(--color-paper-dim);
-}
+/* .cta__footer and .cta__footer-inner moved to Footer.css when the
+   footer became its own component. Deleted rather than left behind:
+   dead rules on a class nothing renders are how a stylesheet becomes
+   impossible to reason about. */
 
 .cta__community {
   margin-top: var(--space-5);

@@ -24,6 +24,41 @@
   line-height: 1.6;
 }
 
+/* ---- two columns: copy and rings left, trailer right ----------------
+
+   Stacked by default, side by side only once there is genuinely room.
+
+   The text column carries a 380px MINIMUM rather than a bare 1fr, so as
+   the window narrows it is the video that gives up width, not the
+   paragraph. A 16:9 frame a hundred pixels narrower is invisible; a 52ch
+   paragraph squeezed to 250px is unreadable.
+
+   align-items: center because the left column is taller than a 16:9
+   frame and top-aligning leaves a block of dead space under the video.
+   Change to `start` to pin its top level with the eyebrow instead. */
+.storyfeed__layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+}
+
+@media (min-width: 980px) {
+  .storyfeed__layout {
+    grid-template-columns: minmax(380px, 1fr) minmax(0, 700px);
+    gap: var(--space-4);
+    align-items: center;
+  }
+}
+
+/* The ring tray inside this column is a flex row under `overflow-x:
+   auto`, and it will happily report a content width far wider than its
+   track and push the whole grid out sideways. min-width: 0 is what
+   allows a grid item to be narrower than its own contents, which is
+   exactly what a horizontal scroll box needs. */
+.storyfeed__intro {
+  min-width: 0;
+}
+
 /* The tray scrolls sideways rather than wrapping, which is the shape
    people expect from a status row and keeps it to one line on a phone. */
 .storyfeed__tray {
@@ -342,4 +377,17 @@
     border-radius: 0;
     border: none;
   }
+}
+/* The ring tray is a scroll row inside a column narrower than its own
+   contents, so the last ring is cut off. That is correct behaviour and
+   it will happen at any width once there are enough stories, but a flat
+   vertical slice through a circle reads as a rendering bug rather than
+   as an invitation to scroll. Fading the last 48px turns the same cut
+   into an affordance.
+
+   Harmless when nothing overflows: flex items pack to the left, so the
+   faded strip lands on empty space and is invisible. */
+.storyfeed__intro .storyfeed__tray {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent 100%);
 }
