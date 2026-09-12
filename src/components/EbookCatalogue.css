@@ -7,6 +7,23 @@
 
 .catalogue__head {
   max-width: 62ch;
+
+  /* HOW FAR THE HEADING AND ITS PARAGRAPH SIT DOWN THE PAGE.
+
+     The track below reserves a tall band of empty top padding for the
+     backdrop to stand in, so the head text was floating a long way above
+     the cards with nothing between them. This pushes the text down into
+     that band, and .catalogue__row pulls itself back up by the same
+     amount, so the section does not get taller, the gap just closes.
+
+     One number, raise it to tighten further. */
+  padding-top: var(--head-drop);
+
+  /* .catalogue__row is positioned, and positioned boxes paint after
+     static ones no matter what order they are in. Without this the head
+     text would sit UNDER the backdrop it now overlaps. */
+  position: relative;
+  z-index: 2;
 }
 
 .catalogue__label {
@@ -28,6 +45,7 @@
 .catalogue__caption {
   color: var(--color-paper-dim);
   font-size: clamp(1rem, 1.6vw, 1.1rem);
+  max-width: 40ch;
   line-height: 1.6;
 }
 
@@ -41,9 +59,48 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  /* Bumped from --space-3 to give the backdrop room to read as its own
-     layer under the head text rather than butting straight into it. */
-  margin-top: var(--space-4);
+  /* Negative once --head-drop exceeds the base gap, which is the point:
+     the head text moves down into this row's empty top band rather than
+     stacking above it, so the two close up without the section growing. */
+  margin-top: calc(var(--space-4) - var(--head-drop));
+
+  /* HOW HIGH THE BACKDROP SITS, measured from the bottom of this row.
+     This is the number to nudge.
+
+     It was 70px, which left the art sitting down in the same band as
+     the cards with a large empty gap above it, which is what you were
+     looking at. The track reserves 220px of headroom above the cards
+     specifically so this art has somewhere to stand, and at 70px it was
+     not reaching into it.
+
+     At 220px the lower third of the art passes behind the card
+     row, poster-behind-a-shelf, and the rest stands clear in the
+     headroom. Raise it to lift the art further, lower it to tuck more
+     of it behind the cards. */
+  --backdrop-lift: 230px;
+
+  /* How far the head text drops into the backdrop band. See
+     .catalogue__head. */
+  --head-drop: 170px;
+
+  /* The track's own padding, named here rather than written inline
+     below, because the arrow offset is derived from it. */
+  --track-pad-top: 220px;
+  --track-pad-bottom: 20px;
+
+  /* WHY THE ARROWS NEEDED MOVING.
+
+     This row centres its children with `align-items: center`, and the
+     track is one of those children. But the track's box is the cards
+     PLUS 220px of empty top padding, so its centre sits about 100px
+     above the middle of the actual card row. The arrows were obediently
+     centring on a box that is mostly empty space.
+
+     Half the difference between the track's top and bottom padding is
+     exactly the correction. Derived rather than typed, so changing the
+     padding above moves the arrows with it instead of quietly putting
+     them out of line again. */
+  --arrow-drop: calc((var(--track-pad-top) - var(--track-pad-bottom)) / 2);
 }
 
 .catalogue__track {
@@ -64,7 +121,7 @@
      `overflow-y` to compute to `auto` too, so anything that grows past
      this padding would otherwise be cut off rather than just visually
      overlapping its neighbors. */
-  padding: 220px 4px 20px;
+  padding: var(--track-pad-top) 4px var(--track-pad-bottom);
 }
 
 /* Placeholder cards are decorative enough that a visible scrollbar
@@ -110,6 +167,37 @@
   flex-direction: column;
   justify-content: flex-end;
   padding: var(--space-2);
+  /* A card with real cover art has no tint behind it, and a transparent
+     card would show the backdrop through its own art while it scales.
+     Ink keeps it opaque during the moment a lazy-loaded cover is still
+     arriving. */
+  background-color: var(--color-ink);
+}
+
+/* The cover art itself. `cover` rather than `contain`: the slot is a
+   fixed 2:3 and a real scan that is slightly off that ratio should fill
+   the card and crop a few pixels rather than letterbox with bars, which
+   would look like a bug next to ten cards that fit. */
+.catalogue__card-art {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The tag and the call to action sit on top of the art, so they need
+   something behind them. Without this they land on whatever the cover
+   happens to be at that point, which is fine on one book and unreadable
+   on the next. */
+.catalogue__card-scrim {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 0;
+  height: 48%;
+  background: linear-gradient(to top, rgba(6, 6, 8, 0.88), rgba(6, 6, 8, 0));
+  pointer-events: none;
 }
 
 .catalogue__card-halftone {
@@ -184,16 +272,24 @@
   box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.4);
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+
+  /* Drops the arrows off the track box's centre and onto the card row's
+     real centre. See --arrow-drop on .catalogue__row for why. */
+  transform: translateY(var(--arrow-drop));
 }
 
+/* The nudge on hover and press has to carry --arrow-drop with it.
+   transform is one property, so a bare translate(-2px, -2px) here would
+   replace the offset rather than add to it, and the arrow would jump
+   100px up the moment the pointer touched it. */
 .catalogue__arrow:hover {
   background: var(--color-gold-bright);
-  transform: translate(-2px, -2px);
+  transform: translate(-2px, calc(var(--arrow-drop) - 2px));
   box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.4);
 }
 
 .catalogue__arrow:active {
-  transform: translate(1px, 1px);
+  transform: translate(1px, calc(var(--arrow-drop) + 1px));
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
 }
 
@@ -203,21 +299,19 @@
   }
 }
 
-/* The one big illustration behind the row of cards: a 2:1 placeholder
-   block for now (see EbookCatalogue.jsx's `bg`/`bgTint`), swapped for a
-   real per-book PNG later without touching this layout. Anchored to
-   the row's right edge on wide screens, since the cards themselves
-   scroll from the left and this gives the row a fixed visual anchor to
-   scroll "past"; recentered on mobile, where there's no spare width to
-   anchor into without running off-screen. */
+/* The one big illustration behind the row of cards, a per-book 2:1
+   image that crossfades as you scroll. Anchored to the row's right edge
+   on wide screens, since the cards themselves scroll from the left and
+   this gives the row a fixed visual anchor to scroll "past"; recentered
+   on mobile, where there is no spare width to anchor into without
+   running off-screen. */
 .catalogue__backdrop {
   position: absolute;
-  /* Anchored from the bottom, not centered: with the track's tall top
-     padding above, this lets most of the (now much bigger) art stand
-     up in that headroom in full view, with only its lower slice
-     running behind the cards, poster-behind-the-shelf style, rather
-     than sitting in the same band as the cards and mostly hidden. */
-  bottom: 70px;
+  /* Anchored from the bottom so most of the art stands up in the
+     track's headroom with only its lower slice running behind the
+     cards. The height it sits at is --backdrop-lift on .catalogue__row,
+     which is the one number to nudge. */
+  bottom: var(--backdrop-lift);
   right: 0;
   width: clamp(480px, 56vw, 860px);
   aspect-ratio: 2 / 1;
@@ -238,6 +332,14 @@
      content, this is atmosphere glimpsed around and between them, not
      a second thing competing for attention. */
   opacity: 0.55;
+}
+
+.catalogue__backdrop-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .catalogue__backdrop-halftone {
@@ -269,7 +371,7 @@
        nothing poking up. Anchoring from the top instead, just past
        the track's own top padding, keeps most of it in the clear
        headroom with only its lower edge dipping behind the cards. */
-    top: 80px;
+    top: 60px;
     bottom: auto;
     left: 50%;
     right: auto;

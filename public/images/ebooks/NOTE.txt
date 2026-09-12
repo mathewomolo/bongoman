@@ -1,0 +1,31 @@
+BONGOMAN ebook art
+==================
+
+This folder REPLACES public/images/ebooks/ whole. Delete the old one and
+drop this in. The ebook-01 to ebook-11 numbering is gone: nothing points
+at those files any more.
+
+22 files, flat:
+
+  <title-slug>.png            600 x 900   cover, matches the card's 2:3
+  <title-slug>-backdrop.png   1600 x 800  the big art behind the row, 2:1
+
+EbookCatalogue.jsx builds both filenames from the book's title, so if you
+rename a book in that file you rename its two images to match and nothing
+else changes.
+
+REPLACING THEM
+--------------
+
+Covers: the card lays a tag and a "Coming soon" line over the bottom, with
+a scrim behind them. Keep important detail clear of the bottom third. The
+lettered title is hidden automatically whenever a cover image exists,
+because a real cover carries its own title.
+
+Backdrops: these sit behind the card row at 55 percent opacity with cards
+in front of them. They read as atmosphere, so low contrast and a clear
+centre work better than a busy composition.
+
+If the real covers are scans of the printed books rather than new art,
+their ratio will not be 2:3. Say so and the card geometry gets set to the
+real ratio once, rather than every cover being cropped slightly forever.

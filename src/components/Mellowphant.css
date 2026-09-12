@@ -1,0 +1,148 @@
+.mellow {
+  position: relative;
+  background: var(--color-ink-soft);
+}
+
+.mellow__inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+
+  /* THE ONE LINE THE WHOLE EFFECT DEPENDS ON.
+
+     A grid item defaults to `align-items: stretch`, which makes the left
+     column exactly as tall as the row, which is exactly as tall as the
+     scrolling right column. A sticky element can only travel inside its
+     own containing block, so a full-height column has nowhere to travel
+     and sticky silently does nothing. The section just scrolls normally
+     and the effect looks broken with no error to explain it.
+
+     `start` lets the left column be only as tall as its own content, so
+     the row height comes from the right column and the left one has the
+     full difference to stick through. */
+  align-items: start;
+
+  padding-block: var(--space-6);
+}
+
+/* ---- Stationary half ---------------------------------------------- */
+
+.mellow__art {
+  position: sticky;
+
+  /* Pins to the top of the viewport. The art is centred inside a full
+     viewport-height box rather than offset with a translate, because a
+     transform on a sticky element creates a new containing block and
+     breaks the pin. */
+  top: 0;
+  height: 100vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mellow__art-inner {
+  text-align: center;
+}
+
+.mellow__logo {
+  /* The real logo is supplied at 300x300, so it is never scaled up past
+     its natural size. It only ever shrinks, on narrow screens. */
+  width: min(300px, 60vw);
+  height: auto;
+  margin-inline: auto;
+  border-radius: 4px;
+}
+
+.mellow__art-caption {
+  display: block;
+  margin-top: var(--space-2);
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.8rem;
+  color: var(--color-paper-dim);
+}
+
+/* ---- Scrolling half ------------------------------------------------ */
+
+.mellow__copy {
+  /* Padding at the bottom keeps the last block from ending level with the
+     art, which would pop the pin loose a moment before the section ends
+     and read as a glitch. */
+  padding-bottom: var(--space-5);
+}
+
+.mellow__eyebrow {
+  color: var(--color-clay);
+}
+
+.mellow__heading {
+  margin-top: var(--space-1);
+  font-size: clamp(2rem, 4.5vw, 3.2rem);
+  line-height: 1;
+  color: var(--color-paper);
+  max-width: 16ch;
+}
+
+.mellow__lede {
+  margin-bottom: var(--space-5);
+}
+
+.mellow__block {
+  /* Generous spacing is doing real work here. The right column has to be
+     meaningfully taller than the viewport or there is not enough travel
+     for the left column to hold still through, and the effect never
+     registers. This is the number to raise if the pin feels too brief. */
+  margin-bottom: var(--space-5);
+  max-width: 46ch;
+}
+
+.mellow__block:last-child {
+  margin-bottom: 0;
+}
+
+.mellow__block-heading {
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 1rem;
+  color: var(--color-gold);
+  margin-bottom: var(--space-1);
+}
+
+.mellow__block-body {
+  color: var(--color-paper-dim);
+  font-size: clamp(1rem, 1.6vw, 1.15rem);
+  line-height: 1.65;
+}
+
+/* ---- Narrow screens ------------------------------------------------ */
+
+@media (max-width: 900px) {
+  .mellow__inner {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    padding-block: var(--space-5);
+  }
+
+  /* Sticky is switched off rather than kept at a smaller height. On a
+     phone a pinned panel eats half the screen for the whole section, so
+     the art sits above the copy and scrolls away with it. */
+  .mellow__art {
+    position: static;
+    height: auto;
+  }
+
+  .mellow__heading {
+    max-width: none;
+  }
+
+  .mellow__block {
+    max-width: none;
+    margin-bottom: var(--space-4);
+  }
+}

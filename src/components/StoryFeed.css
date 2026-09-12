@@ -28,8 +28,22 @@
    people expect from a status row and keeps it to one line on a phone. */
 .storyfeed__tray {
   list-style: none;
+
+  /* TOP MARGIN is the gap between the paragraph above and the rings.
+     Raise this to push the whole row further down. */
   margin: var(--space-4) 0 0;
-  padding: 0 4px var(--space-1);
+
+  /* TOP PADDING is room inside the scroll box, and it is a separate
+     problem from the margin. `overflow-x: auto` below silently makes
+     overflow-y `auto` as well, so this tray clips vertically even though
+     it was only asked to scroll sideways. Two things then get a flat top
+     cut across them: the hover `scale(1.06)` on the ring, worth about
+     2.3px, and the entrance spring, which is underdamped at
+     stiffness 300 / damping 18 and overshoots its resting position by
+     roughly 3px before settling. Was 0, which is why the rings looked
+     clipped by whatever sat above them. */
+  padding: 10px 4px var(--space-1);
+
   display: flex;
   gap: var(--space-3);
   overflow-x: auto;
@@ -156,19 +170,39 @@
   overflow: hidden;
 }
 
+/* Every bar is a full width block that is squashed to nothing and grows
+   back. scaleX rather than width because width forces a layout pass on
+   every frame and transforms do not. Empty is the default, so a bar that
+   is neither done nor running shows nothing. */
 .storyviewer__bar-fill {
   display: block;
+  width: 100%;
   height: 100%;
   background: var(--color-paper);
+  transform: scaleX(0);
+  transform-origin: left center;
 }
 
-/* Driven by CSS rather than JS so that holding to pause can freeze it
-   mid-bar. animation-fill-mode: forwards holds the bar full once the
-   frame finishes, in the gap before the next one mounts. */
+/* Frames already watched. Static, no animation. */
+.storyviewer__bar-fill--done {
+  transform: scaleX(1);
+}
+
+/* The frame playing now. The row this lives in is keyed per frame in
+   StoryFeed.jsx, so the element is thrown away and rebuilt on every
+   advance, which is what makes the animation start from zero each time
+   rather than sitting where the last one finished. */
 .storyviewer__bar-fill--running {
-  animation-name: storyProgress;
-  animation-timing-function: linear;
-  animation-fill-mode: forwards;
+  animation: storyProgress var(--story-duration, 4000ms) linear forwards;
+
+  /* index.css has `* { animation-duration: 0.01ms !important }` under
+     prefers-reduced-motion, which is correct for decoration and wrong
+     here. This bar reports how much time is left, so collapsing it to
+     nothing finishes it instantly and, with fill-mode forwards, leaves
+     it sitting full before the frame has even started. That is the
+     "already filled" bar. A class selector outranks the universal
+     selector, so this declaration wins that fight. */
+  animation-duration: var(--story-duration, 4000ms) !important;
 }
 
 .storyviewer__stage--paused .storyviewer__bar-fill--running {
@@ -176,8 +210,12 @@
 }
 
 @keyframes storyProgress {
-  from { width: 0%; }
-  to { width: 100%; }
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
 .storyviewer__head {

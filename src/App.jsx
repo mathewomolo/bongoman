@@ -5,6 +5,7 @@ import Story from "./components/Story.jsx";
 import Game from "./components/Game.jsx";
 import World from "./components/World.jsx";
 import Ebooks from "./components/Ebooks.jsx";
+import Mellowphant from "./components/Mellowphant.jsx";
 import Cta from "./components/Cta.jsx";
 import CustomCursor from "./components/CustomCursor.jsx";
 import SiteNav from "./components/SiteNav.jsx";
@@ -26,6 +27,10 @@ export default function App() {
         <Game />
         <World />
         <Ebooks />
+        {/* Studio section sits after the product sections and before the
+            CTA, so the reader meets who made it once they already care,
+            and the store buttons still get the last word. */}
+        <Mellowphant />
         <Cta />
       </main>
       {/* Fixed-position, renders on top of everything and never blocks

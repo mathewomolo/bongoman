@@ -1,11 +1,12 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
+import Reveal, { RevealItem } from "./Reveal.jsx";
 import "./World.css";
 
-// PLACEHOLDER: the three "stage" backgrounds below (gradients + the small
-// scattered shapes in each) stand in for real illustrated environment art.
-// The crossfade wiring (scroll progress -> opacity per stage) stays the
-// same once real Nairobi/peri-urban/savanna illustrations replace them.
+// PLACEHOLDER: the three stage backgrounds are the labelled stand-ins in
+// /public/images/world/. The crossfade wiring (scroll progress -> opacity
+// per stage) stays the same once real illustrated environment art replaces
+// them. Filenames and the layering that drives them live in World.css.
 
 const stages = [
   {
@@ -73,26 +74,20 @@ export default function World() {
 
   return (
     <section className="world" id="world">
-      <div className="container world__intro">
-        <motion.p
-          className="eyebrow world__eyebrow"
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.6 }}
-          transition={{ duration: 0.5 }}
-        >
+      {/* The intro and outro entrances used to be hand written per element,
+          each with `amount: 0.6` and its own tuned `delay`. 0.6 meant the
+          block waited until it was mostly on screen before it started, so
+          you watched it move rather than finding it already arrived. Reveal
+          triggers at 0.2 and handles the offsets between children itself,
+          so adding a line here no longer means renumbering delays. */}
+      <Reveal className="container world__intro" stagger={0.07}>
+        <RevealItem as="p" className="eyebrow world__eyebrow">
           The World
-        </motion.p>
-        <motion.h2
-          className="world__heading"
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.6 }}
-          transition={{ duration: 0.5, delay: 0.05 }}
-        >
+        </RevealItem>
+        <RevealItem as="h2" className="world__heading">
           From the familiar to the unknown.
-        </motion.h2>
-      </div>
+        </RevealItem>
+      </Reveal>
 
       <div className="world__scrollzone" ref={scrollRef}>
         <div className="world__sticky">
@@ -108,26 +103,15 @@ export default function World() {
         </div>
       </div>
 
-      <div className="container world__outro">
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.6 }}
-          transition={{ duration: 0.5 }}
-        >
+      <Reveal className="container world__outro" stagger={0.08}>
+        <RevealItem as="p">
           Three environments, one continuous run outward. The city he knows, then everything
           past it.
-        </motion.p>
-        <motion.p
-          className="world__outro-emphasis comic-outline"
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.6 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
+        </RevealItem>
+        <RevealItem as="p" className="world__outro-emphasis comic-outline">
           Kenya, drawn by a Kenyan, playable by anyone.
-        </motion.p>
-      </div>
+        </RevealItem>
+      </Reveal>
     </section>
   );
 }

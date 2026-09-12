@@ -2,12 +2,16 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import "./SiteNav.css";
 
+// Order mirrors the order of sections down the page, so the bar reads as a
+// map of where you are rather than an arbitrary menu. Studio sits after
+// Books because Mellowphant sits between Ebooks and the CTA in App.jsx.
 const LINKS = [
   { href: "#feed", label: "Feed" },
   { href: "#story", label: "Story" },
   { href: "#game", label: "Game" },
   { href: "#world", label: "World" },
   { href: "#books", label: "Books" },
+  { href: "#studio", label: "Mellowphant" },
 ];
 
 export default function SiteNav() {

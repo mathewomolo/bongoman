@@ -23,8 +23,7 @@
 //
 // The `text` type needs no file at all: it renders as a coloured panel
 // with the caption lettered across it. Handy for a title card at the
-// front of a set, and it is what the placeholder entries below use so
-// the feed works before you have uploaded anything.
+// front of a set.
 //
 // ---------------------------------------------------------------------
 // PRACTICAL NOTES
@@ -42,6 +41,20 @@
 //           tap the first ring far more than the last.
 // How many: five to eight rings is the sweet spot. More than that and
 //           the tray stops feeling curated.
+//
+// ---------------------------------------------------------------------
+// CURRENT STATE
+// ---------------------------------------------------------------------
+// PLACEHOLDER: every `src` below points at the labelled stand-in images
+// in public/images/stories/. They are the six 1080x1920 files from the
+// placeholder set, not real comic pages. Replace the files, keep the
+// paths, and nothing here needs editing. Or replace the paths with your
+// own filenames, which is the better habit once real material lands,
+// since "story-04" tells you nothing a year from now.
+//
+// The `cover` on each ring is the little circular thumbnail in the tray.
+// It crops to a circle, so whatever is in the middle of that image is
+// what people see at 76px.
 // =====================================================================
 
 export const STORIES = [
@@ -50,12 +63,12 @@ export const STORIES = [
     label: "Start here",
     // The ring thumbnail. Same rules as an item `src`. With no cover
     // set, the ring falls back to the tint below.
-    cover: null,
+    cover: "/images/stories/story-01.jpg",
     tint: "var(--color-gold)",
     items: [
       {
-        type: "text",
-        tint: "var(--color-gold)",
+        type: "image",
+        src: "/images/stories/story-01.jpg",
         caption: "PLACEHOLDER. Swap these for real pages, screenshots and clips.",
       },
       {
@@ -68,17 +81,17 @@ export const STORIES = [
   {
     id: "pages",
     label: "From the books",
-    cover: null,
+    cover: "/images/stories/story-02.jpg",
     tint: "var(--color-action-red)",
     items: [
       {
-        type: "text",
-        tint: "var(--color-action-red)",
+        type: "image",
+        src: "/images/stories/story-02.jpg",
         caption: "PLACEHOLDER. Panels lifted from the comics.",
       },
       {
-        type: "text",
-        tint: "var(--color-clay)",
+        type: "image",
+        src: "/images/stories/story-03.jpg",
         caption: "Eleven books. Seventy-odd pages each.",
       },
       {
@@ -91,17 +104,17 @@ export const STORIES = [
   {
     id: "build",
     label: "In progress",
-    cover: null,
+    cover: "/images/stories/story-04.jpg",
     tint: "var(--color-savanna)",
     items: [
       {
-        type: "text",
-        tint: "var(--color-savanna)",
+        type: "image",
+        src: "/images/stories/story-04.jpg",
         caption: "PLACEHOLDER. Screenshots straight out of the build.",
       },
       {
-        type: "text",
-        tint: "var(--color-ink-soft)",
+        type: "image",
+        src: "/images/stories/story-05.jpg",
         caption: "Animation tests belong here too. Short, silent, under 3MB.",
       },
       {
@@ -114,12 +127,12 @@ export const STORIES = [
   {
     id: "desk",
     label: "Kham's desk",
-    cover: null,
+    cover: "/images/stories/story-06.jpg",
     tint: "var(--color-clay)",
     items: [
       {
-        type: "text",
-        tint: "var(--color-clay)",
+        type: "image",
+        src: "/images/stories/story-06.jpg",
         caption: "PLACEHOLDER. Sketches, roughs, and the things that never made it in.",
       },
       {

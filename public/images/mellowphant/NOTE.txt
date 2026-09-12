@@ -1,0 +1,16 @@
+Mellowphant Games
+=================
+
+logo-mellowphant.png   300 x 300
+
+Drop your real studio logo in at this exact name and size and the studio block
+picks it up with no code change.
+
+Square, so it holds up whether the block puts it left of the copy on desktop or
+above it on mobile. If the real logo is a wide lockup rather than a square mark,
+tell me and I will change the block to suit rather than you letterboxing it into
+a square.
+
+Unzip so the path becomes:
+
+  public/images/mellowphant/logo-mellowphant.png

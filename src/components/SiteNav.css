@@ -50,7 +50,13 @@
 .sitenav__links {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+
+  /* Was a flat var(--space-3). Adding Studio made six links, and between
+     the 700px breakpoint and about 900px the row was running into the
+     Join pill. The gap now shrinks with the viewport and only reaches
+     its full size once there is room for it. */
+  gap: clamp(0.85rem, 2vw, var(--space-3));
+
   margin-left: auto;
 }
 
@@ -62,6 +68,7 @@
   font-size: 0.8rem;
   color: var(--color-paper-dim);
   text-decoration: none;
+  white-space: nowrap;
   transition: color 0.15s ease;
 }
 
@@ -81,6 +88,7 @@
   background: var(--color-action-red);
   color: var(--color-paper);
   text-decoration: none;
+  white-space: nowrap;
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
@@ -104,12 +112,19 @@
 
 /* Anchor links land under the fixed bar without this: scroll-margin
    tells the browser to stop short by the bar's height plus a little
-   breathing room. */
+   breathing room.
+
+   Every id the nav can jump to has to be listed here. Miss one and that
+   single link half works: it scrolls, but the heading arrives hidden
+   behind the bar, which looks like the anchor pointing at the wrong
+   place rather than a spacing bug. "studio" was added with the
+   Mellowphant section. */
 [id="feed"],
 [id="story"],
 [id="game"],
 [id="world"],
 [id="books"],
+[id="studio"],
 [id="join"] {
   scroll-margin-top: 78px;
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ITEM_DURATION, STORIES } from "../data/stories.js";
 import "./StoryFeed.css";
 
@@ -49,7 +49,6 @@ function StoryFrame({ item, onEnded, paused }) {
 function StoryViewer({ story, onClose, onNextStory, onPrevStory }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const reduceMotion = useReducedMotion();
   const closeRef = useRef(null);
 
   // This component now stays mounted while you move between stories,
@@ -70,31 +69,37 @@ function StoryViewer({ story, onClose, onNextStory, onPrevStory }) {
   const item = story.items[index];
   const isVideo = item?.type === "video";
 
+  // These used to call onNextStory / onPrevStory from inside a setIndex
+  // updater. React treats updaters as pure and is free to run them more
+  // than once, and in development it deliberately does, so the parent got
+  // told to advance twice from one tap. At the end of the last story that
+  // is the bug you saw: the close fired against a state that had already
+  // moved, so the viewer stayed up instead of handing you back the page.
+  // Reading `index` directly and branching outside the updater keeps the
+  // side effect out of it.
   const next = useCallback(() => {
-    setIndex((i) => {
-      if (i + 1 < story.items.length) return i + 1;
-      onNextStory();
-      return i;
-    });
-  }, [story.items.length, onNextStory]);
+    if (index + 1 < story.items.length) setIndex(index + 1);
+    else onNextStory();
+  }, [index, story.items.length, onNextStory]);
 
   const prev = useCallback(() => {
-    setIndex((i) => {
-      if (i > 0) return i - 1;
-      onPrevStory();
-      return i;
-    });
-  }, [onPrevStory]);
+    if (index > 0) setIndex(index - 1);
+    else onPrevStory();
+  }, [index, onPrevStory]);
 
   // The auto-advance clock. Videos are excluded because they advance
-  // themselves on `ended`. It is also skipped entirely when the visitor
-  // has asked for reduced motion: content that moves on by itself is
-  // exactly what that setting is about, so they drive it by tapping.
+  // themselves on `ended`.
+  //
+  // This used to bail out entirely under prefers-reduced-motion, which
+  // also killed the progress bar, and a story feed that never advances
+  // is broken rather than accessible. Auto-advance is the interaction
+  // here, not decoration. The accessible answer is a way to stop it,
+  // which already exists: hold anywhere to pause, or press space.
   useEffect(() => {
-    if (paused || isVideo || reduceMotion) return;
+    if (paused || isVideo) return;
     const timer = setTimeout(next, ITEM_DURATION);
     return () => clearTimeout(timer);
-  }, [index, paused, isVideo, reduceMotion, next]);
+  }, [index, paused, isVideo, next]);
 
   // Keyboard support, and focus moved into the dialog on open so a
   // keyboard or screen reader user is not left behind on the page.
@@ -128,25 +133,20 @@ function StoryViewer({ story, onClose, onNextStory, onPrevStory }) {
         {/* One segment per frame: full for what you have seen, filling
             for the current one, empty ahead.
 
-            The fill is a CSS animation rather than a JS one so that
-            holding to pause can freeze it mid-bar with
-            animation-play-state. Animating the width from React meant
-            pause had to pick some duration, and any value there either
-            snapped the bar to full or fought the resume.
-
-            Keyed on story and index together so every advance restarts
-            the bars cleanly, including when a whole new story cuts in. */}
+            Keyed on story and frame together, so every advance throws
+            this whole row away and builds it again. That remount is the
+            entire restart mechanism. A CSS animation on an element that
+            survives does not replay, it stays where it finished, which
+            is what left a bar sitting full before its frame had
+            started. */}
         <div className="storyviewer__progress" key={`${story.id}-${index}`}>
           {story.items.map((_, i) => (
             <span key={i} className="storyviewer__bar">
               <span
-                className={`storyviewer__bar-fill${
-                  i === index && !isVideo && !reduceMotion ? " storyviewer__bar-fill--running" : ""
+                className={`storyviewer__bar-fill${i < index ? " storyviewer__bar-fill--done" : ""}${
+                  i === index && !isVideo ? " storyviewer__bar-fill--running" : ""
                 }`}
-                style={{
-                  width: i < index ? "100%" : "0%",
-                  animationDuration: `${ITEM_DURATION}ms`,
-                }}
+                style={{ "--story-duration": `${ITEM_DURATION}ms` }}
               />
             </span>
           ))}
@@ -213,19 +213,33 @@ export default function StoryFeed() {
 
   const close = () => setOpenIndex(null);
 
+  // Past the last item of the last story there is nowhere left to go, so
+  // the viewer closes and hands the page back. Closing is the end state
+  // rather than sticking on the final frame, which leaves people tapping
+  // at something that will never move.
+  //
+  // Written as a plain branch rather than a setOpenIndex updater because
+  // it has to call setSeen as well, and a state updater is the wrong
+  // place for a second piece of state to be set. The guard on null covers
+  // the tail of the exit animation, where the viewer is still mounted for
+  // 200ms and its timer can fire once more after the close.
   const nextStory = useCallback(() => {
-    setOpenIndex((i) => {
-      if (i === null) return null;
-      const nextIdx = i + 1;
-      if (nextIdx >= STORIES.length) return null;
-      setSeen((prev) => new Set(prev).add(STORIES[nextIdx].id));
-      return nextIdx;
-    });
-  }, []);
+    if (openIndex === null) return;
+
+    const nextIdx = openIndex + 1;
+    if (nextIdx >= STORIES.length) {
+      setOpenIndex(null);
+      return;
+    }
+
+    setOpenIndex(nextIdx);
+    setSeen((prev) => new Set(prev).add(STORIES[nextIdx].id));
+  }, [openIndex]);
 
   const prevStory = useCallback(() => {
-    setOpenIndex((i) => (i === null || i === 0 ? i : i - 1));
-  }, []);
+    if (openIndex === null || openIndex === 0) return;
+    setOpenIndex(openIndex - 1);
+  }, [openIndex]);
 
   // The page must not scroll behind an open full-screen viewer.
   useEffect(() => {

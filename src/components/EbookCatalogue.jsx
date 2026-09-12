@@ -7,12 +7,17 @@ import "./EbookCatalogue.css";
 // backdrop never land on the same color.
 const TINTS = ["var(--color-gold)", "var(--color-action-red)", "var(--color-savanna)", "var(--color-clay)"];
 
-// Real titles, given directly by Mathew. Cover art is the placeholder
-// part here, not the titles: he has real cover images for most of
-// these but hasn't uploaded them yet, so each card is a generated
-// color placeholder with the title lettered on it in the meantime.
-// Swapping in real art later is a one-field change per entry (`cover`
-// below), the same pattern used for World.jsx's background art.
+// Filenames are derived from the title rather than stored separately, so
+// there is one source of truth. Rename a book here and you rename its two
+// images to match, with nothing else to keep in sync. A numbered scheme
+// (ebook-07) drifts the moment the list is reordered.
+const slug = (title) =>
+  title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+// Real titles, given directly by Mathew.
 const books = [
   "Bongoman and the magic potion",
   "Bongoman and the golden boots",
@@ -27,17 +32,15 @@ const books = [
   "Bongoman undercover",
 ].map((title, i) => ({
   title,
-  // PLACEHOLDER: cycles through the site's existing palette until real
-  // cover art replaces these cards. Once `cover` is set to an actual
-  // image path, the card below falls back to that instead of the tint.
+  // Fallback colour, used only if the cover image is ever removed.
   tint: TINTS[i % TINTS.length],
-  cover: null,
-  // PLACEHOLDER: stands in for the per-book 2:1 illustration behind the
-  // list until Mathew has real artwork for each title. Once `bg` is set
-  // to an actual image path, the backdrop below falls back to that
-  // instead of the tint block.
+  // PLACEHOLDER: labelled stand-in cover in public/images/ebooks/.
+  // Real cover art drops in at the same path and 2:3 shape.
+  cover: `/images/ebooks/${slug(title)}.png`,
   bgTint: TINTS[(i + 2) % TINTS.length],
-  bg: null,
+  // PLACEHOLDER: labelled stand-in for the per-book 2:1 illustration
+  // behind the row, in public/images/ebooks/, suffixed -backdrop.
+  bg: `/images/ebooks/${slug(title)}-backdrop.png`,
   // PLACEHOLDER: real storefront or download link per book. Set this to
   // a URL and that card becomes a proper external link on its own; left
   // null it renders as a non-interactive "Coming soon" card instead of
@@ -156,9 +159,31 @@ function CatalogueCard({ book, index, scrollX, trackWidth, isDuplicate }) {
         className="catalogue__card"
         style={{ background: book.cover ? undefined : book.tint, scale, y: lift }}
       >
-        <span className="catalogue__card-halftone halftone" aria-hidden="true" />
+        {book.cover ? (
+          <>
+            {/* alt is empty on purpose: the title travels with the card
+                as real text below, so describing the art again would
+                make a screen reader read every book twice. */}
+            <img className="catalogue__card-art" src={book.cover} alt="" loading="lazy" />
+            {/* The tag and the call to action sit over the art, so they
+                need something behind them or they land on whatever the
+                cover happens to be at that point. */}
+            <span className="catalogue__card-scrim" aria-hidden="true" />
+          </>
+        ) : (
+          <span className="catalogue__card-halftone halftone" aria-hidden="true" />
+        )}
+
         <span className="catalogue__card-tag">Ebook</span>
-        <span className="catalogue__card-title comic-outline">{book.title}</span>
+
+        {/* A real cover already has its title printed on it, so lettering
+            it again on top would say the same thing twice. The text stays
+            in the DOM either way so the card is still announced and still
+            searchable, it just stops being drawn once there is art. */}
+        <span className={book.cover ? "visually-hidden" : "catalogue__card-title comic-outline"}>
+          {book.title}
+        </span>
+
         {/* \u2192 rather than a literal arrow so the file stays pure
             ASCII and survives any encoding it gets copied through. */}
         <span className="catalogue__card-cta">{isLink ? "Get it \u2192" : "Coming soon"}</span>
@@ -185,8 +210,14 @@ function CatalogueBackdrop({ book }) {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.45, ease: "easeInOut" }}
         >
-          <span className="catalogue__backdrop-halftone halftone" />
-          {!book.bg && <span className="catalogue__backdrop-label comic-outline">{book.title}</span>}
+          {book.bg ? (
+            <img className="catalogue__backdrop-img" src={book.bg} alt="" loading="lazy" />
+          ) : (
+            <>
+              <span className="catalogue__backdrop-halftone halftone" />
+              <span className="catalogue__backdrop-label comic-outline">{book.title}</span>
+            </>
+          )}
         </motion.div>
       </AnimatePresence>
     </div>

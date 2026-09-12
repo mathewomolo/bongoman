@@ -46,16 +46,30 @@
   display: flex;
   align-items: flex-end;
   overflow: hidden;
-  --stage-bg-scale: 0.9;
+
+  /* Was 0.9, pulling the illustration back from the top edge so the tint
+     gradient read as open sky above the ground line. That depended on the
+     old silhouette PNGs having a TRANSPARENT sky, so the gap it opened
+     was filled by the stage's own colour and looked deliberate.
+
+     The labelled placeholders now in /images/world/ are fully opaque
+     rectangles, so at 0.9 the pull-back leaves a hard horizontal seam
+     across the top where the image simply stops. 1 fills the frame edge
+     to edge and the seam goes away.
+
+     PUT THIS BACK TO 0.9 the day real transparent-sky art lands, or the
+     illustration will sit flat against the top of the frame with no air
+     above it. */
+  --stage-bg-scale: 1;
 }
 
-/* PLACEHOLDER: world-urban.png, world-periurban.png and world-rural.png
-   (in /public/images/) are simple silhouette stand-ins for real
-   illustrated environment art, one per stage of the Nairobi -> peri-urban
-   -> savanna progression. Each is a transparent-sky PNG, so the tint
+/* PLACEHOLDER: world-stage-1.png, world-stage-2.png and world-stage-3.png
+   (in /public/images/world/) are labelled stand-ins for real illustrated
+   environment art, one per stage of the Nairobi -> peri-urban -> savanna
+   progression. Real art should be a transparent-sky PNG so the tint
    gradient shows through the sky and this stage's own solid fallback
-   color shows through wherever the PNG is fully transparent or scaled
-   back from the frame edges.
+   colour shows through wherever the PNG is transparent or scaled back
+   from the frame edges.
 
    The illustration lives on its own ::after layer instead of being part
    of .world__stage's background, specifically so it can be pulled back
@@ -73,7 +87,7 @@
    more" is a single value to nudge, here or per stage below.
 
    The tint sits on a separate ::before, above the image (z-index 1 vs
-   0) but never transformed, so the color wash still reaches every edge
+   0) but never transformed, so the colour wash still reaches every edge
    even once the illustration has been pulled up. When real art replaces
    these files, keep the same filenames (or update the three url()s
    below) and this layering keeps working unchanged. */
@@ -102,7 +116,7 @@
 }
 
 .world__stage--urban::after {
-  background-image: url("/images/world-urban.png");
+  background-image: url("/images/world/world-stage-1.png");
 }
 
 .world__stage--urban::before {
@@ -114,7 +128,7 @@
 }
 
 .world__stage--periurban::after {
-  background-image: url("/images/world-periurban.png");
+  background-image: url("/images/world/world-stage-2.png");
 }
 
 .world__stage--periurban::before {
@@ -126,7 +140,7 @@
 }
 
 .world__stage--rural::after {
-  background-image: url("/images/world-rural.png");
+  background-image: url("/images/world/world-stage-3.png");
 }
 
 .world__stage--rural::before {
