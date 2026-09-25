@@ -22,6 +22,14 @@ const BLINK_MAX_GAP = 6000;
 
 const IDLE_DELAY = 4500;
 
+/* How long a bubble stays before it fades on its own.
+
+   It used to sit there until the next mouse move, which meant that
+   during a hold, when nothing is moving by definition, it parked on
+   screen for the whole gather and flattened the moment it was sitting
+   on top of. It says its line and leaves. */
+const BUBBLE_HOLD_MS = 1500;
+
 /* STRAIN: the effort of holding the stars in.
 
    One value from 0 to 1 drives everything, so there is a single number
@@ -57,7 +65,7 @@ const SHAKE_MAX = 1.7;
    stopwatch, which rewarded waiting. Counting what you are actually
    holding rewards gathering: one star is dim, fourteen is full, and
    holding an empty patch of sky earns nothing at all. */
-const CAPTURE_FULL = 6;
+const CAPTURE_FULL = 10;
 
 /* PLACEHOLDER copy, mine rather than Mathew's.
 
@@ -118,6 +126,7 @@ export default function CustomCursor() {
   const [idleMessage, setIdleMessage] = useState(null);
   const hasPositionedRef = useRef(false);
   const idleTimerRef = useRef(null);
+  const bubbleTimerRef = useRef(null);
 
   // A ref as well as the state. The state drives the glow class; the
   // ref is what the idle timer reads when it fires, because that
@@ -165,12 +174,18 @@ export default function CustomCursor() {
 
     const scheduleIdleMessage = () => {
       clearTimeout(idleTimerRef.current);
+      clearTimeout(bubbleTimerRef.current);
       idleTimerRef.current = setTimeout(() => {
         // Read at FIRE time, not at schedule time: the pointer can have
         // moved between the two, and the line should match where it
         // actually came to rest.
         const pool = glowingRef.current ? CTA_MESSAGES : IDLE_MESSAGES;
         setIdleMessage(pool[Math.floor(Math.random() * pool.length)]);
+
+        // Not re-armed after it fades. Re-arming would have the cursor
+        // pipe up every few seconds through a long hold, which is worse
+        // than one that overstays. It waits for you to move again.
+        bubbleTimerRef.current = setTimeout(() => setIdleMessage(null), BUBBLE_HOLD_MS);
       }, IDLE_DELAY);
     };
 
@@ -217,6 +232,7 @@ export default function CustomCursor() {
       setIdleMessage(null);
       handleUp();
       clearTimeout(idleTimerRef.current);
+      clearTimeout(bubbleTimerRef.current);
     };
     const handleEnter = () => {
       if (hasPositionedRef.current) setVisible(true);
@@ -240,6 +256,7 @@ export default function CustomCursor() {
       document.documentElement.removeEventListener("mouseleave", handleLeave);
       document.documentElement.removeEventListener("mouseenter", handleEnter);
       clearTimeout(idleTimerRef.current);
+      clearTimeout(bubbleTimerRef.current);
     };
   }, [active, rawX, rawY, bodyX, bodyY]);
 
