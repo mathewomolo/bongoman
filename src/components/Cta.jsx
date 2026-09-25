@@ -10,7 +10,7 @@ import "./Cta.css";
 // after the CTA the footer ended up in the middle of the page.
 export default function Cta() {
   return (
-    <section className="cta" id="join">
+    <section className="cta" id="join" data-cursor-glow>
       <div className="halftone cta__halftone" />
       <PlexusField />
       <div className="container cta__inner">

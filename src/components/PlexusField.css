@@ -1,13 +1,18 @@
 /* Owned by the component rather than duplicated into every section
-   that uses it. Ported from the Erevuka build, where it renders in
-   five sections. Here it is used once, in the CTA, but the rule stays
-   with the component so a second section only has to satisfy the same
-   contract: position: relative and overflow: hidden on itself, and
-   z-index: 1 on its own content wrapper to sit above this.
-
-   .cta and .cta__inner already met that contract before this was
-   added, which is why the port needed no changes to Cta.css. */
+   that uses it. The contract a host section must satisfy is unchanged:
+   position: relative and overflow: hidden on itself, and z-index: 1 on
+   its own content wrapper to sit above this. */
 .plexus-fx {
+  /* THE EDGE FADE. The canvas is a rectangle and a star field that
+     stops dead on a straight line reads as a panel rather than as sky.
+     A mask costs nothing per frame, unlike fading the stars in the
+     draw loop, which would mean extra work on every star forever.
+
+     The two stops are the knobs. Raise 58% to push the fade outward
+     and keep more of the field at full strength. */
+  -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, #000 58%, transparent 100%);
+  mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, #000 58%, transparent 100%);
+
   position: absolute;
   inset: 0;
 
@@ -19,7 +24,7 @@
 
   display: block;
 
-  /* Never intercepts clicks; see PlexusField.jsx for why the mouse
+  /* Never intercepts clicks; see PlexusField.jsx for why the pointer
      tracking still works despite this. */
   pointer-events: none;
 }

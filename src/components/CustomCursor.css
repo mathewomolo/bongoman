@@ -131,3 +131,131 @@
     display: none;
   }
 }
+
+/* ---- the cursor glow ------------------------------------------------
+
+   THE THREE NUMBERS WORTH TOUCHING, kept together:
+
+     --glow-size   diameter at rest, in px
+     --glow-grow   how much bigger it gets over an opted-in section
+     --glow-alpha  strength at rest; the bright state doubles it
+
+   Which sections brighten it is not set here. A section opts in with a
+   data-cursor-glow attribute, and CustomCursor.jsx reads it off the
+   pointer's target. */
+.custom-cursor__glow-anchor {
+  --glow-size: 260px;
+  --glow-grow: 1.7;
+  --glow-alpha: 0.1;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  /* Below the eyeball at 9999, above everything else. The eyeball then
+     reads as the thing emitting the light. */
+  z-index: 9998;
+  pointer-events: none;
+}
+
+.custom-cursor__glow {
+  display: block;
+  width: var(--glow-size);
+  height: var(--glow-size);
+
+  /* Centred with margins rather than a translate. JavaScript owns the
+     transform on the anchor and the scale owns it here, so neither can
+     spare it for centring. */
+  margin-left: calc(var(--glow-size) / -2);
+  margin-top: calc(var(--glow-size) / -2);
+
+  border-radius: 50%;
+
+  /* Gold, fading to nothing well before the edge. A hard-stopping
+     gradient reads as a disc; this reads as light. */
+  background: radial-gradient(
+    circle closest-side,
+    rgba(242, 169, 59, var(--glow-alpha)),
+    rgba(242, 169, 59, calc(var(--glow-alpha) * 0.35)) 45%,
+    transparent 70%
+  );
+
+  /* Dimmer at rest so the bright state has somewhere to go. The
+     difference is carried by scale and opacity, both of which the
+     compositor handles without touching layout. */
+  opacity: 0.55;
+
+  transition: transform 0.35s ease, opacity 0.35s ease;
+}
+
+/* Over a section that asked for it. Scale and opacity only, both of
+   which the compositor handles without touching layout, so this costs
+   nothing while the pointer is moving. */
+.custom-cursor__glow--on {
+  transform: scale(var(--glow-grow));
+  opacity: 1;
+}
+
+/* ---- the gathered charge -------------------------------------------
+
+   Sits inside the same anchor as the ambient glow, so it rides the same
+   spring-lagged position and the two read as one light source.
+
+   Smaller and hotter than the ambient glow on purpose. The ambient one
+   says where the cursor is; this one says how hard it is pulling, and a
+   big soft version of it would just look like the first glow getting
+   brighter.
+
+     --charge-size   diameter at full strain, in px
+
+   Scale and opacity are driven from CustomCursor.jsx and are both
+   compositor-only properties, so none of this touches layout. */
+.custom-cursor__charge {
+  --charge-size: 175px;
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: var(--charge-size);
+  height: var(--charge-size);
+
+  /* Centred with margins, because JavaScript owns the transform. */
+  margin-left: calc(var(--charge-size) / -2);
+  margin-top: calc(var(--charge-size) / -2);
+
+  border-radius: 50%;
+
+  /* Near white at the core falling to gold, rather than gold
+     throughout. Light that is gathering reads hotter at the centre. */
+  background: radial-gradient(
+    circle closest-side,
+    rgba(255, 243, 214, 0.5),
+    rgba(242, 169, 59, 0.34) 34%,
+    rgba(242, 169, 59, 0.09) 62%,
+    transparent 78%
+  );
+}
+
+/* No styles of their own beyond existing. They are transform carriers,
+   one property each, and exist only because transform cannot be shared.
+   See CustomCursor.jsx for the full reasoning. */
+.custom-cursor__shake,
+.custom-cursor__squeeze {
+  display: block;
+}
+/* Holding the button to gather stars is a drag gesture as far as the
+   browser is concerned, so it starts selecting text and leaves a blue
+   smear across the section. Killing selection is the fix rather than
+   calling preventDefault on mousedown, because preventDefault there
+   also swallows focus behaviour on anything focusable underneath.
+
+   Scoped to the same attribute that opts a section into the glow, so a
+   new section gets this automatically instead of someone having to
+   remember. TRADE-OFF: text in an opted-in section cannot be selected
+   or copied at all. Fine for the CTA, which is headings and buttons.
+   Worth revisiting if a section with real body copy ever opts in. */
+[data-cursor-glow] {
+  -webkit-user-select: none;
+  user-select: none;
+}
