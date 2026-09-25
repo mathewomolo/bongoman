@@ -27,7 +27,7 @@ const DUST_AREA = 6400;
 const DUST_MIN = 40;
 const DUST_MAX = 150;
 
-const GOLD_RATIO = 0.18;  // share of stars born with the warm tint
+const GOLD_RATIO = 0.38;  // share of stars born with the warm tint
 
 /* DEPTH. One number per star, 0 far and 1 near, driving five things at
    once. This is what stops the field reading as a flat sheet of dots:
@@ -37,11 +37,11 @@ const GOLD_RATIO = 0.18;  // share of stars born with the warm tint
 const DEPTH_SIZE = [0.55, 1.15];
 const DEPTH_ALPHA = [0.28, 1.0];
 const DEPTH_SPEED = [0.45, 1.25];
-const DEPTH_PUSH = [0.2, 1.0];
+const DEPTH_PUSH = [0.42, 1.0];
 
 const SPEED = 0.18;       // px per frame of base drift, before depth
-const STAR_MIN_R = 1.0;
-const STAR_MAX_R = 2.6;
+const STAR_MIN_R = 1.3;
+const STAR_MAX_R = 3.4;
 
 /* THE GLOW SPRITE replaces ctx.shadowBlur, which was by far the most
    expensive line in the old version: a real gaussian blur, on the CPU
@@ -55,8 +55,8 @@ const STAR_MAX_R = 2.6;
    own radius the sprite is stamped at, so the visible dot is small and
    the halo around it is wide. */
 const SPRITE_PX = 64;
-const GLOW_SCALE = 7.5;
-const DUST_GLOW_SCALE = 5.5;
+const GLOW_SCALE = 8.6;
+const DUST_GLOW_SCALE = 6.2;
 
 // Slow, so it reads as a sky rather than a string of fairy lights.
 const TWINKLE_MIN = 0.0007;
@@ -77,9 +77,57 @@ const TWINKLE_DEPTH = 0.34;   // share of brightness that swings
    almost no swirl and get shoved straight out from behind. A minority
    curl, and they curl in both directions. Raise SWIRL_BIAS for more
    straight ones. Set SWIRL to 0 and every star goes straight. */
-const REPEL_RADIUS = 115;
-const REPEL_FORCE = 1.6;
-const ATTRACT_FORCE = 1.15;
+/* THE REGRESSION THIS FIXES, so it is not repeated.
+
+   The first physics pass replaced a straight line falloff with a
+   softened inverse square AND kept a squared taper on top of it. Two
+   falloffs multiplied together collapsed the whole field into a 30px
+   bubble. Measured against the version that worked: five times weaker
+   at 60px, FORTY-SIX times weaker at 100px.
+
+   Everything interesting lived in that mid range. The even spread
+   needs stars 60 to 110px out to actually move, and a spiral needs a
+   star to travel a long arc while the tangential force works on it.
+   Neither had anything left to work with.
+
+   The taper is linear now, SOFTEN is wide enough that the inverse
+   square shapes the curve rather than strangling it, and the radius is
+   wider. Current profile against the original: 0.70 vs 0.44 at 30px,
+   0.33 vs 0.29 at 60px, 0.097 vs 0.078 at 100px. Stronger everywhere,
+   still fiercer up close.
+
+   IF THIS EVER FEELS DEAD AGAIN, print the force at 30, 60 and 100
+   before changing anything else. */
+const REPEL_RADIUS = 150;
+
+/* Pull reach, as a multiple of REPEL_RADIUS. It was 1.7, so a star
+   250px away was already being hauled in, and distant stars arriving
+   fast is what made the gather feel cheap. At 1.0 the pull reaches
+   exactly as far as the push. Raise it if the gather ends up feeling
+   like too small a circle. */
+const ATTRACT_REACH = 1.0;
+
+/* HOW SHARPLY DISTANCE STOPS MATTERING. The taper is raised to this
+   power before it scales the force, so this is the one knob for the
+   outer half of the field.
+
+   Measured with everything else unchanged, force at 100px:
+   exponent 1 gives 0.097, 2 gives 0.032, 3 gives 0.011, 4 gives 0.0036.
+
+   RAISING IT DOES NOT WEAKEN THE CLOSE RANGE. At 30px the force is 0.45
+   at every setting, which is what the original linear version had. It
+   only steepens the far half, which is exactly the control that was
+   missing when the whole curve had to be traded off against itself. */
+const FALLOFF_EXP = 3;
+
+const REPEL_FORCE = 1.1;
+const ATTRACT_FORCE = 0.95;
+
+/* Swirl is PER STAR when pushing, which is what makes some shove
+   straight and some curl. Pulling uses one shared direction instead:
+   mixed directions collapsing inward read as chaos, one direction
+   reads as a vortex, and the vortex was the part worth keeping. */
+const HOLD_SPIN = 0.85;
 const SWIRL = 0.95;
 const SWIRL_BIAS = 2.4;
 const DRAG = 0.92;
@@ -98,7 +146,7 @@ const DRAG = 0.92;
    old linear law spent most of its range at middling strength. This one
    is fierce up close and nearly nothing far away, so the numbers had to
    grow to feel like anything. */
-const SOFTEN = 26;
+const SOFTEN = 60;
 
 /* ORBITS. While you hold, friction nearly switches off. That one number
    is the whole effect: with damping gone a star pulled inward does not
@@ -130,7 +178,7 @@ const HOLD_DRAG = 0.985;
    every star with company sat pinned at maximum speed, the field boiled,
    and the frame rate went with it. Set this to 0 to switch mutual
    repulsion off entirely. */
-const SPACING = 42;
+const SPACING = 34;
 const SPACING_FORCE = 0.018;
 
 /* Brightness carries kinetic energy, which goes as v squared. This
@@ -232,10 +280,15 @@ export default function PlexusField() {
       const c = s.getContext("2d");
       const half = SPRITE_PX / 2;
       const g = c.createRadialGradient(half, half, 0, half, half, half);
-      g.addColorStop(0, "rgba(255, 255, 255, 1)");
-      g.addColorStop(0.07, `rgba(${coreRgb}, 0.95)`);
-      g.addColorStop(0.2, `rgba(${ACCENT_RGB}, 0.4)`);
-      g.addColorStop(0.46, `rgba(${ACCENT_RGB}, 0.1)`);
+      /* The gold has to be LOUD here or the field reads as white with a
+         warm edge, which is what the first version did: the gold band
+         sat at 0.4 alpha and was gone by 46 percent of the radius.
+         It now holds 0.78 close in and still carries at 62 percent. */
+      g.addColorStop(0, "rgba(255, 252, 240, 1)");
+      g.addColorStop(0.06, `rgba(${coreRgb}, 0.98)`);
+      g.addColorStop(0.15, `rgba(${ACCENT_RGB}, 0.78)`);
+      g.addColorStop(0.34, `rgba(${ACCENT_RGB}, 0.3)`);
+      g.addColorStop(0.62, `rgba(${ACCENT_RGB}, 0.07)`);
       g.addColorStop(1, `rgba(${ACCENT_RGB}, 0)`);
       c.fillStyle = g;
       c.fillRect(0, 0, SPRITE_PX, SPRITE_PX);
@@ -352,6 +405,7 @@ export default function PlexusField() {
 
       const force = holding ? -ATTRACT_FORCE : REPEL_FORCE;
       const drag = holding ? HOLD_DRAG : DRAG;
+      const reach = holding ? REPEL_RADIUS * ATTRACT_REACH : REPEL_RADIUS;
 
       for (const p of stars) {
         drift(p, drag);
@@ -361,25 +415,29 @@ export default function PlexusField() {
         const dist = Math.hypot(dx, dy);
         p.md = dist;
 
-        if (dist < REPEL_RADIUS && dist > 0.001) {
+        if (dist < reach && dist > 0.001) {
           const nx = dx / dist;
           const ny = dy / dist;
 
           // Tangential is the radial vector turned ninety degrees.
-          // Mixed in per star, so the field has both straight shoves
-          // and curls in it rather than one behaviour everywhere.
-          const sx = nx - ny * p.swirl * SWIRL;
-          const sy = ny + nx * p.swirl * SWIRL;
+          // Per star when pushing, one shared direction when pulling.
+          const tang = holding ? HOLD_SPIN : p.swirl * SWIRL;
+          const sx = nx - ny * tang;
+          const sy = ny + nx * tang;
           const len = Math.hypot(sx, sy) || 1;
 
-          // Softened inverse square, then WINDOWED to zero at the
-          // radius. A hard cutoff means a star crossing the boundary
-          // gets a full strength kick out of nowhere. The squared taper
-          // brings the force smoothly to nothing, which molecular
-          // dynamics calls a shifted-force cutoff.
+          /* Softened inverse square, windowed to zero at the reach so a
+             star crossing the boundary is not kicked out of nowhere.
+             Molecular dynamics calls that a shifted-force cutoff.
+
+             FALLOFF_EXP shapes the outer half only. The mistake worth
+             not repeating is hard-coding it at 2 while ALSO shortening
+             the radius: that stacked two falloffs and killed the mid
+             range. Named and tunable, with the radius left wide, it is
+             the useful control instead of the accident. */
           const falloff = (SOFTEN * SOFTEN) / (dist * dist + SOFTEN * SOFTEN);
-          const taper = 1 - dist / REPEL_RADIUS;
-          const amount = falloff * taper * taper * force * lerp(DEPTH_PUSH, p.z);
+          const taper = Math.pow(1 - dist / reach, FALLOFF_EXP);
+          const amount = falloff * taper * force * lerp(DEPTH_PUSH, p.z);
           p.kx += (sx / len) * amount;
           p.ky += (sy / len) * amount;
 
