@@ -1,9 +1,21 @@
 .mellow {
   position: relative;
   background: var(--color-ink-soft);
+
+  /* Lets a horizontal or diagonal finger drag reach the image trail
+     while vertical panning still scrolls the page. See MellowTrail.css
+     for why pinch-zoom is named explicitly. */
+  touch-action: pan-y pinch-zoom;
 }
 
 .mellow__inner {
+  /* Lifts the copy and the sticky logo above the cursor image trail,
+     which sits on an absolutely positioned layer at z-index 0 behind
+     this. Without it the trail paints over the text, because
+     positioned boxes paint after static ones. */
+  position: relative;
+  z-index: 1;
+
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-5);

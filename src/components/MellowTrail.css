@@ -1,0 +1,128 @@
+/* Cursor image trail. See MellowTrail.jsx for the spawn mechanic.
+
+   THE THREE NUMBERS WORTH TOUCHING, kept together rather than
+   scattered down the file:
+
+     --trail-size  how big each image renders. The art is supplied at
+                   400px square, so this only ever shrinks it.
+     --trail-life  how long one image lives, start to gone. This is the
+                   only place the duration exists. MellowTrail.jsx
+                   deliberately does not know it.
+     --trail-hold  the share of that life spent at full size, before it
+                   starts leaving. Raise it for a trail that lingers.
+
+   The fourth tunable, how far apart the images fall, is SPAWN_DISTANCE
+   in the JSX, because it is a distance in pointer travel rather than
+   anything CSS can see. */
+.mtrail {
+  --trail-size: 140px;
+  --trail-life: 0.9s;
+  --trail-hold: 55%;
+
+  position: absolute;
+  inset: 0;
+
+  /* Vertical panning stays with the browser, everything else comes to
+     us. Without this a drag is claimed for scrolling almost at once and
+     the trail barely registers on a phone.
+
+     pinch-zoom is listed explicitly. pan-y alone would disable zooming
+     inside this section, which is a real thing people rely on and not
+     ours to take away for a decoration. */
+  touch-action: pan-y pinch-zoom;
+
+  /* Above the section background, below the logo and the copy. The
+     copy is lifted over it by `position: relative; z-index: 1` on
+     .mellow__inner, which is the only change this effect makes to the
+     existing section. Nothing here goes near the custom cursor's 9999. */
+  z-index: 0;
+
+  /* Clips an image dropped near the edge so it does not spill into the
+     section above.
+
+     THIS BELONGS HERE AND NOWHERE ELSE. Putting overflow: hidden on
+     .mellow instead would make it the scroll container for
+     .mellow__art, and the sticky pin that the whole split-scroll
+     depends on would silently stop working. This layer is a SIBLING of
+     that column, so clipping here touches none of its ancestors. */
+  overflow: hidden;
+
+  pointer-events: none;
+}
+
+.mtrail__slot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--trail-size);
+  height: var(--trail-size);
+
+  /* Centres the image on the pointer using margins rather than a
+     translate. transform is a single property and JavaScript owns it
+     on this element, so a -50% translate here would be overwritten on
+     the next drop. */
+  margin-left: calc(var(--trail-size) / -2);
+  margin-top: calc(var(--trail-size) / -2);
+
+  /* Deliberate, and bounded: twelve small nodes promoted for the life
+     of the section. This is what keeps the drop smooth on a mid range
+     laptop. */
+  will-change: transform;
+}
+
+.mtrail__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+
+  /* Resting state. Every slot is mounted and its image fetched up
+     front, then held invisible, so the first pass through the pool
+     never pops in half loaded. */
+  opacity: 0;
+  transform: rotate(var(--rot, 0deg)) scale(0.6);
+}
+
+.mtrail__img.is-live {
+  animation: mtrail-pop var(--trail-life) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Lands, holds, then leaves. It does not drift: drifting reads as
+   debris blowing across the section rather than as a trail the pointer
+   left behind.
+
+   --rot is repeated on every keyframe because transform is one
+   property. Omit it from any step and the image snaps upright for that
+   part of the animation. */
+@keyframes mtrail-pop {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--rot, 0deg)) scale(0.6);
+  }
+  18% {
+    opacity: 1;
+    transform: rotate(var(--rot, 0deg)) scale(1);
+  }
+  55% {
+    opacity: 1;
+    transform: rotate(var(--rot, 0deg)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--rot, 0deg)) scale(0.92);
+  }
+}
+
+/* No reduced-motion block here on purpose. The component returns null
+   when that setting is on, so none of this ever renders, and a rule
+   here would be dead code that looks like it is doing something. */
+
+/* 140px is a third of the width of a 390px phone. The images have to
+   come down or the trail stops reading as a trail and becomes a stack
+   of pictures. */
+@media (max-width: 640px) {
+  .mtrail {
+    --trail-size: 88px;
+  }
+}

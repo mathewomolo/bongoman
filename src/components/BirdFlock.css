@@ -1,0 +1,77 @@
+/* Click-spawned flock. See BirdFlock.jsx for where the birds come from.
+
+   Every duration lives here and nowhere else. The component hands over
+   a direction and a few per-bird variations as custom properties, and
+   this file decides how long any of it takes. */
+.flock {
+  position: absolute;
+  inset: 0;
+
+  /* Same band as the resting birds, so a startled flock flies through
+     the same depth of the scene rather than on top of the copy. */
+  z-index: 5;
+
+  /* Clips at the section edge. Safe here: the hero already has
+     overflow: hidden and there is no sticky element anywhere in this
+     section for a scroll container to break. */
+  overflow: hidden;
+
+  /* Never intercepts the click that spawned it, and never blocks the
+     controls underneath. The listener sits on the parent section. */
+  pointer-events: none;
+}
+
+.flock__bird {
+  position: absolute;
+
+  /* left and top are set inline, per bird, to the click point. The
+     transform below is therefore free to carry ONLY the flight, with
+     nothing to compose against. Centring is done with margins for the
+     same reason: transform is a single property. */
+  width: var(--size);
+  margin-left: calc(var(--size) / -2);
+  margin-top: calc(var(--size) / -2);
+
+  opacity: 0;
+  animation: flock-fly var(--dur) cubic-bezier(0.16, 0.7, 0.32, 1) var(--delay) forwards;
+}
+
+/* Out and away, fading at both ends. Starting small and growing reads
+   as a bird that was already in flight passing the viewer, rather than
+   one that materialised at the cursor. */
+@keyframes flock-fly {
+  0% {
+    transform: translate(0, 0) scale(0.35);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  70% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) scale(1);
+    opacity: 0;
+  }
+}
+
+/* The wing beat, on its own element so it never fights the flight
+   transform. A squash on the vertical axis is enough: at this size the
+   eye reads the silhouette changing, not the geometry. */
+.flock__wing {
+  display: block;
+  width: 100%;
+  height: auto;
+  animation: flock-flap var(--flap) ease-in-out infinite;
+}
+
+@keyframes flock-flap {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.3);
+  }
+}

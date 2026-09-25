@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import StoreButtons from "./StoreButtons.jsx";
 import SocialLinks from "./SocialLinks.jsx";
+import PlexusField from "./PlexusField.jsx";
 import "./Cta.css";
 
 // The site footer used to be the last thing in this file. It moved to
@@ -11,6 +12,7 @@ export default function Cta() {
   return (
     <section className="cta" id="join">
       <div className="halftone cta__halftone" />
+      <PlexusField />
       <div className="container cta__inner">
         <motion.p
           className="eyebrow cta__eyebrow"

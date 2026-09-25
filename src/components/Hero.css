@@ -51,9 +51,20 @@
 .hero__sun {
   position: absolute;
   top: 6%;
-  left: 50%;
+
+  /* Centred with auto margins rather than translateX(-50%).
+
+     THIS IS LOAD BEARING. framer-motion builds this element's transform
+     from its own x and y values, and an inline transform overrides the
+     one in this file. With the centring living in `transform` it was
+     being erased the moment a motion value moved, shifting the sun half
+     its own width to the right. Auto margins put the centring somewhere
+     framer never writes. */
+  left: 0;
+  right: 0;
+  margin-inline: auto;
   width: min(46vw, 480px);
-  transform: translateX(-50%);
+
   z-index: 2;
   filter: blur(0.5px);
 }
@@ -73,8 +84,16 @@
 .hero__carousel {
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
+
+  /* WHY THE SIDES ARE NEGATIVE TOO.
+
+     Same reasoning as the bottom. This layer now travels up to 18px
+     horizontally with the pointer as well, and pinned at left: 0 that
+     would drag a bare strip into frame at one edge. 24px of overhang is
+     the travel plus margin. */
+  left: -24px;
+  right: -24px;
+
   bottom: -180px;
   z-index: 3;
   pointer-events: none;

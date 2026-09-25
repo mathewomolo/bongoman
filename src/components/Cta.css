@@ -3,6 +3,10 @@
   background: radial-gradient(120% 100% at 50% 0%, rgba(242, 169, 59, 0.14), transparent 60%), var(--color-ink);
   padding-top: var(--space-6);
   overflow: hidden;
+
+  /* Same reason as the studio section: a finger dragging across the
+     plexus should reach it, while vertical panning still scrolls. */
+  touch-action: pan-y pinch-zoom;
 }
 
 .cta__halftone {

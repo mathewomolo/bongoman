@@ -20,3 +20,43 @@
   letter-spacing: 0.03em;
   color: var(--color-paper-dim);
 }
+
+/* ---- the credit line -----------------------------------------------
+
+   The quietest type on the page, and still readable.
+
+   THE DIMMING IS ON THE COLOUR, NOT THE ELEMENT. `opacity` on the div
+   would drag the link's hover state down with it, so a gold hover would
+   arrive at 60% gold. Mixing the colour instead leaves the anchor free
+   to set its own at full strength.
+
+   60% and not lower: measured against the ink background, this token at
+   45% comes out at 3.63 and fails AA for text this size, while 60%
+   measures 5.61 and passes. The plain declaration comes first as the
+   fallback for anything without color-mix. */
+.sitefooter__credit {
+  margin-top: var(--space-2);
+  font-family: var(--font-condensed);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: right;
+  color: var(--color-paper-dim);
+  color: color-mix(in srgb, var(--color-paper-dim) 60%, var(--color-ink));
+}
+
+.sitefooter__credit a {
+  color: inherit;
+  text-decoration: none;
+
+  /* A transparent border rather than none, so the element does not
+     change height when the hover border arrives. */
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.sitefooter__credit a:hover,
+.sitefooter__credit a:focus-visible {
+  color: var(--color-gold);
+  border-bottom-color: var(--color-gold);
+}

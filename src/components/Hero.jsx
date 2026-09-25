@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
 import StoreButtons from "./StoreButtons.jsx";
+import BirdFlock from "./BirdFlock.jsx";
 import "./Hero.css";
 
 /* ---------------------------------------------------------------
@@ -43,6 +44,30 @@ const SLIDES = [
 
 // How long each frame holds before advancing.
 const SLIDE_MS = 6000;
+
+/* ---- pointer parallax ------------------------------------------------
+
+   Max travel in px at the very edge of the section, depth-scaled to
+   match the scroll rates in the component below (-60, -140, -220).
+
+   Vertical is deliberately half of horizontal. Vertical movement
+   competes with the scroll feel; horizontal has nothing to compete
+   with.
+
+   Set any pair to 0 to take that layer out of it. The plate, the ground
+   fade and the copy are deliberately absent: the first two are
+   full-bleed, so moving them would expose a bare edge, and text that
+   slides around under the pointer reads as unstable rather than deep. */
+const POINTER_SHIFT = {
+  sun: { x: 10, y: 5 },
+  carousel: { x: 18, y: 9 },
+  birds: { x: 30, y: 15 },
+};
+
+// Softness of the follow. Low stiffness on purpose, so the scene drifts
+// toward the pointer rather than tracking it frame for frame, which on
+// layers this large reads as twitching.
+const POINTER_SPRING = { stiffness: 60, damping: 18, mass: 0.6 };
 
 // PLACEHOLDER: Sun and Birds are still drawn rather than illustrated.
 // Both are SVG, so both already have the alpha the layering depends on.
@@ -105,6 +130,85 @@ export default function Hero() {
   const reduceMotion = useReducedMotion();
   const [slide, setSlide] = useState(0);
 
+  /* ---- pointer parallax, additive ------------------------------------
+
+     ADDITIVE BY CONSTRUCTION. Each layer's vertical value is its scroll
+     value PLUS a pointer offset, so with the pointer at the centre of
+     the section every layer sits at exactly the value it had before any
+     of this existed. With no pointer at all, on touch or under reduced
+     motion, the springs never leave 0 and the scroll parallax is
+     untouched. That is the guarantee, and it is checkable rather than a
+     promise.
+
+     Horizontal is free, because framer composes x and y separately and
+     nothing else writes x.
+
+     Vertical is combined into ONE motion value rather than set twice.
+     transform is a single property, so a second y on the same element
+     would overwrite the first and the scroll parallax would silently
+     stop working. Same rule the sun's centring fell foul of; see
+     Hero.css. */
+  const pointerX = useMotionValue(0);
+  const pointerY = useMotionValue(0);
+  const px = useSpring(pointerX, POINTER_SPRING);
+  const py = useSpring(pointerY, POINTER_SPRING);
+
+  const sunPX = useTransform(px, (v) => v * POINTER_SHIFT.sun.x);
+  const sunPY = useTransform([sunY, py], ([s, p]) => s + p * POINTER_SHIFT.sun.y);
+  const carouselPX = useTransform(px, (v) => v * POINTER_SHIFT.carousel.x);
+  const carouselPY = useTransform([carouselY, py], ([s, p]) => s + p * POINTER_SHIFT.carousel.y);
+  const birdsPX = useTransform(px, (v) => v * POINTER_SHIFT.birds.x);
+  const birdsPY = useTransform([birdsY, py], ([s, p]) => s + p * POINTER_SHIFT.birds.y);
+
+  useEffect(() => {
+    if (reduceMotion) return undefined;
+
+    // Same gate as CustomCursor. A touch device has no pointer to
+    // follow, and the springs simply stay at 0, which is the untouched
+    // scroll-only scene.
+    if (!window.matchMedia("(pointer: fine)").matches) return undefined;
+
+    const section = sectionRef.current;
+    if (!section) return undefined;
+
+    /* The rect is cached and refreshed on scroll and resize rather than
+       read inside the move handler. Reading it per move forces a layout
+       on every frame the pointer is inside a section this large. */
+    let rect = section.getBoundingClientRect();
+    const measure = () => {
+      rect = section.getBoundingClientRect();
+    };
+
+    // Normalised to -1..1 from the centre of the section, so the
+    // constants above are readable as "px at the very edge" rather than
+    // as a scale factor against an arbitrary pixel distance.
+    const handleMove = (event) => {
+      const nx = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      const ny = ((event.clientY - rect.top) / rect.height) * 2 - 1;
+      pointerX.set(Math.max(-1, Math.min(1, nx)));
+      pointerY.set(Math.max(-1, Math.min(1, ny)));
+    };
+
+    // Back to centre, so the scene settles to exactly its scroll-only
+    // position rather than freezing wherever the pointer left it.
+    const handleLeave = () => {
+      pointerX.set(0);
+      pointerY.set(0);
+    };
+
+    section.addEventListener("pointermove", handleMove, { passive: true });
+    section.addEventListener("pointerleave", handleLeave);
+    window.addEventListener("scroll", measure, { passive: true });
+    window.addEventListener("resize", measure);
+
+    return () => {
+      section.removeEventListener("pointermove", handleMove);
+      section.removeEventListener("pointerleave", handleLeave);
+      window.removeEventListener("scroll", measure);
+      window.removeEventListener("resize", measure);
+    };
+  }, [reduceMotion, pointerX, pointerY]);
+
   // setTimeout keyed on `slide`, not setInterval. With an interval, a
   // click on the third dot could be followed a quarter second later by an
   // auto-advance that was already in flight. Re-arming a timeout every
@@ -138,11 +242,11 @@ export default function Hero() {
       <div className="hero__plate" />
       <div className="halftone hero__halftone" />
 
-      <motion.div className="hero__sun" style={{ y: sunY }}>
+      <motion.div className="hero__sun" style={{ x: sunPX, y: sunPY }}>
         <Sun />
       </motion.div>
 
-      <motion.div className="hero__carousel" style={{ y: carouselY }}>
+      <motion.div className="hero__carousel" style={{ x: carouselPX, y: carouselPY }}>
         {/* All three are mounted at once and crossfaded with opacity,
             rather than mounting and unmounting the active one through
             AnimatePresence. Two reasons. The browser fetches all three
@@ -171,9 +275,15 @@ export default function Hero() {
 
       <div className="hero__ground" />
 
-      <motion.div className="hero__birds" style={{ y: birdsY }}>
+      <motion.div className="hero__birds" style={{ x: birdsPX, y: birdsPY }}>
         <Birds />
       </motion.div>
+
+      {/* The startled flock. Same z-index band as the resting birds, so
+          a burst flies through the scene rather than over the copy. It
+          listens for clicks on the section itself, which is why it can
+          sit anywhere in here. */}
+      <BirdFlock />
 
       <motion.div className="hero__content" style={{ y: titleY, opacity: contentOpacity }}>
         <div className="container hero__inner">

@@ -1,4 +1,5 @@
 import Reveal, { RevealItem } from "./Reveal.jsx";
+import MellowTrail from "./MellowTrail.jsx";
 import "./Mellowphant.css";
 
 /* Split-scroll studio section.
@@ -47,6 +48,12 @@ const blocks = [
 export default function Mellowphant() {
   return (
     <section className="mellow" id="studio">
+      {/* Absolutely positioned layer, so the trail clips at the section
+          edge without overflow: hidden going on .mellow itself, which
+          would make it the scroll container for the sticky column and
+          silently kill the pin. See MellowTrail.css. */}
+      <MellowTrail />
+
       <div className="container mellow__inner">
         {/* Stationary half. Stays put for the whole section. */}
         <div className="mellow__art">

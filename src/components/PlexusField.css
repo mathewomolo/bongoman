@@ -1,0 +1,25 @@
+/* Owned by the component rather than duplicated into every section
+   that uses it. Ported from the Erevuka build, where it renders in
+   five sections. Here it is used once, in the CTA, but the rule stays
+   with the component so a second section only has to satisfy the same
+   contract: position: relative and overflow: hidden on itself, and
+   z-index: 1 on its own content wrapper to sit above this.
+
+   .cta and .cta__inner already met that contract before this was
+   added, which is why the port needed no changes to Cta.css. */
+.plexus-fx {
+  position: absolute;
+  inset: 0;
+
+  /* Sits above .cta's background gradient and above .halftone, which
+     is positioned with z-index auto and comes first in the DOM, and
+     below .cta__inner at z-index 1. Nowhere near the custom cursor's
+     9999. */
+  z-index: 0;
+
+  display: block;
+
+  /* Never intercepts clicks; see PlexusField.jsx for why the mouse
+     tracking still works despite this. */
+  pointer-events: none;
+}

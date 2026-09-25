@@ -1,5 +1,11 @@
 import "./Footer.css";
 
+// PLACEHOLDER: where the credit points. Set it to Odwyre Artworld's site
+// or portfolio and the line becomes a link. Leave it null and it renders
+// as plain text rather than a dead anchor, which is worse than no link.
+const CREDIT_HREF = null;
+const CREDIT_TEXT = "Site by Odwyre Artworld";
+
 /* =========================================================
    The site footer.
 
@@ -36,6 +42,19 @@ export default function Footer() {
             mojibake once by being written UTF-8 and read back as
             Latin-1. An entity cannot do that. */}
         <span>&copy; {year} BONGOMAN. All rights reserved.</span>
+      </div>
+
+      {/* Its own row, rather than a third item in the flex row above.
+          Three items in a space-between row read as equal weight, and
+          this one is deliberately the quietest thing on the page. */}
+      <div className="container sitefooter__credit">
+        {CREDIT_HREF ? (
+          <a href={CREDIT_HREF} target="_blank" rel="noopener noreferrer">
+            {CREDIT_TEXT}
+          </a>
+        ) : (
+          <span>{CREDIT_TEXT}</span>
+        )}
       </div>
     </footer>
   );
