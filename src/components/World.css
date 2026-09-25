@@ -19,18 +19,21 @@
   max-width: 20ch;
 }
 
-/* Scroll-linked crossfade zone: this element is tall (300vh) so there's
-   enough scroll distance for three stages to fade through one another
-   while the inner .world__sticky stays pinned to the viewport. */
+/* Scroll-linked zone: tall enough that the inner .world__sticky can stay
+   pinned while the mask opens, three stages crossfade, and the mask
+   closes again. */
 .world__scrollzone {
   position: relative;
-  /* Was 300vh: three full screens of scrolling to read three short
-     paragraphs. Sticky scroll-driven sections are where mobile readers
-     give up, and the cost of overlong ones is that people never reach
-     what comes after. 180vh keeps the crossfade legible while asking
-     for a lot less. This single number controls the whole pacing of the
-     section, so nudge it if it now feels rushed. */
-  height: 180vh;
+
+  /* This single number controls the pacing of the whole section. It was
+     300vh, then 180vh when the section was only three stages, then back
+     up when the silhouette mask went in: the pinned stretch now has to
+     cover opening the mask, all three stages, and closing it. At 180 the
+     stages got about a third of the distance they used to have.
+
+     How the height is divided between those three jobs is OPEN_START
+     through CLOSE_END in World.jsx, as fractions of it. */
+  height: 320vh;
 }
 
 .world__sticky {
@@ -38,6 +41,33 @@
   top: 0;
   height: 100vh;
   overflow: hidden;
+
+  /* The moving half of the mask, mask-image and mask-size, is set from
+     World.jsx because it follows scroll. These are the static half: one
+     silhouette, never tiled.
+
+     overflow: hidden on THIS element is safe. It is the sticky element
+     itself, not an ancestor of one, and only an ancestor turning into a
+     scroll container breaks a pin. */
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+
+  /* WHERE THE FIGURE SITS, AND WHAT IT GROWS FROM. One number, both
+     jobs, because with a CSS mask they are the same point: the part of
+     the image at this fraction across stays aligned with the same
+     fraction across the screen, whatever size the mask is.
+
+     50% is dead centre and grows from dead centre. Lower moves the
+     figure left AND pulls the opening leftward with it. 36 is the
+     compromise that looked right.
+
+     Separating the two needs the shape scaled by a transform rather
+     than grown by mask-size, which means an SVG clip path. That is a
+     different build. */
+  --mask-anchor-x: 40%;
+
+  mask-position: var(--mask-anchor-x) center;
+  -webkit-mask-position: var(--mask-anchor-x) center;
 }
 
 .world__stage {
@@ -46,6 +76,20 @@
   display: flex;
   align-items: flex-end;
   overflow: hidden;
+
+  /* KEEPS EACH STAGE'S CHILDREN INSIDE IT.
+
+     .world__stage-copy carries z-index: 2. A parent only contains a
+     positioned child's z-index if it creates a stacking context, and
+     opacity does that ONLY WHILE IT IS BELOW 1. Stage 0 sits at opacity
+     1 permanently, so its caption was escaping into the parent's
+     stacking context, where every later stage's artwork sits at z-index
+     0, underneath it. That is why the text floated over all three
+     backgrounds instead of being covered by the next one.
+
+     isolation makes the containment unconditional rather than a side
+     effect of a value that changes as you scroll. */
+  isolation: isolate;
 
   /* Was 0.9, pulling the illustration back from the top edge so the tint
      gradient read as open sky above the ground line. That depended on the
