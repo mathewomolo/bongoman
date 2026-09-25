@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { plexusSignal } from "../lib/plexusSignal.js";
 import "./CustomCursor.css";
 
 // Feel of the "drag": how eagerly the eyeball body chases the real
@@ -35,7 +36,7 @@ const IDLE_DELAY = 4500;
 
    SHAKE_MAX is squared against strain when applied, so a brief press
    barely trembles and a long hold visibly struggles. */
-const STRAIN_RISE_MS = 1800;
+const STRAIN_RISE_MS = 1200;
 const STRAIN_FALL_MS = 220;
 const STRAIN_SPRING = { stiffness: 260, damping: 14, mass: 0.5 };
 
@@ -51,6 +52,12 @@ const STRAIN_SPRING = { stiffness: 260, damping: 14, mass: 0.5 };
    cost something. */
 const CHARGE_SPRING = { stiffness: 90, damping: 26, mass: 1 };
 const SHAKE_MAX = 1.7;
+
+/* How many held stars count as a full charge. The glow used to be a
+   stopwatch, which rewarded waiting. Counting what you are actually
+   holding rewards gathering: one star is dim, fourteen is full, and
+   holding an empty patch of sky earns nothing at all. */
+const CAPTURE_FULL = 6;
 
 /* PLACEHOLDER copy, mine rather than Mathew's.
 
@@ -253,7 +260,14 @@ export default function CustomCursor() {
 
       let s = strainRef.current;
       if (holdingRef.current) {
-        s = Math.min(1, s + delta / STRAIN_RISE_MS);
+        // The ceiling is how many stars are held, not how long the
+        // button has been down. Rate limited in both directions so it
+        // swells and ebbs rather than jumping as stars arrive and leave.
+        const target = Math.min(1, plexusSignal.captured / CAPTURE_FULL);
+        s =
+          s < target
+            ? Math.min(target, s + delta / STRAIN_RISE_MS)
+            : Math.max(target, s - delta / STRAIN_FALL_MS);
       } else {
         s = Math.max(0, s - delta / STRAIN_FALL_MS);
       }

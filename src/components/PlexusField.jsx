@@ -1,206 +1,201 @@
 import { useEffect, useRef } from "react";
+import { plexusSignal } from "../lib/plexusSignal.js";
 import "./PlexusField.css";
 
 /* =========================================================
    TWO POPULATIONS, AND THE REASON FOR IT.
 
    The expensive part of a plexus has never been the stars, it is the
-   PAIRS: every linking star must be measured against every other one,
-   so doubling the count quadruples that loop. Meanwhile a star that
-   only drifts and glows costs one drawImage and nothing else.
+   PAIRS: every linking star is measured against every other, so
+   doubling the count quadruples that loop. A star that only drifts and
+   glows costs one drawImage and nothing else.
 
-   So the field is split. STARS link, react to the cursor, and carry
-   the web. DUST is the far layer: it drifts, it twinkles, it is never
-   measured against anything and never reacts to the pointer. That is
-   not a shortcut, it is the depth story being honest. A star that far
-   away does not move because you waved at it.
+   STARS link, react to the cursor, carry the web. DUST is the far
+   layer: it drifts, it twinkles, it is never measured against anything
+   and never reacts to the pointer. That is the depth story being
+   honest. A star that far away does not move because you waved.
 
-   Raising DUST is close to free. Raising STAR_MAX is not.
+   Raising DUST_MAX is close to free. Raising STAR_MAX is not.
    ========================================================= */
 
 const DPR_CAP = 2;
 
-const STAR_AREA = 18000;  // one linking star per this many square px
+const STAR_AREA = 18000;
 const STAR_MIN = 18;
 const STAR_MAX = 70;
 const DUST_AREA = 6400;
 const DUST_MIN = 40;
 const DUST_MAX = 150;
 
-const GOLD_RATIO = 0.38;  // share of stars born with the warm tint
+const GOLD_RATIO = 0.38;
 
 /* DEPTH. One number per star, 0 far and 1 near, driving five things at
-   once. This is what stops the field reading as a flat sheet of dots:
-   near stars are bigger, brighter, drift faster and get shoved hard,
-   far ones barely notice the cursor at all. Each pair below is
-   [value at depth 0, value at depth 1]. */
+   once. Each pair is [value at depth 0, value at depth 1]. */
 const DEPTH_SIZE = [0.55, 1.15];
 const DEPTH_ALPHA = [0.28, 1.0];
 const DEPTH_SPEED = [0.45, 1.25];
 const DEPTH_PUSH = [0.42, 1.0];
 
-const SPEED = 0.18;       // px per frame of base drift, before depth
-const STAR_MIN_R = 1.3;
-const STAR_MAX_R = 3.4;
+const SPEED = 0.18;
+const STAR_MIN_R = 1.7;
+const STAR_MAX_R = 3.8;
 
 /* THE GLOW SPRITE replaces ctx.shadowBlur, which was by far the most
-   expensive line in the old version: a real gaussian blur, on the CPU
-   in most browsers, recomputed for every star on every frame. A single
-   radial gradient rendered once into an offscreen canvas and stamped
-   with drawImage is roughly ten times cheaper, and it looks better,
-   because a gradient is a real falloff rather than a blur of a hard
-   circle.
+   expensive line in this file: a real gaussian blur, on the CPU in most
+   browsers, recomputed per star per frame. One radial gradient rendered
+   once into an offscreen canvas and stamped with drawImage is roughly
+   ten times cheaper, and looks better, because a gradient is a real
+   falloff rather than a blur of a hard circle.
 
-   SPRITE_PX is its resolution. GLOW_SCALE is how many times the star's
-   own radius the sprite is stamped at, so the visible dot is small and
-   the halo around it is wide. */
+   DO NOT REINTRODUCE shadowBlur IN THIS FILE. */
 const SPRITE_PX = 64;
 const GLOW_SCALE = 8.6;
 const DUST_GLOW_SCALE = 6.2;
 
-// Slow, so it reads as a sky rather than a string of fairy lights.
 const TWINKLE_MIN = 0.0007;
 const TWINKLE_MAX = 0.0032;
-const TWINKLE_DEPTH = 0.34;   // share of brightness that swings
+const TWINKLE_DEPTH = 0.34;
 
-/* THE CURSOR.
+/* =========================================================
+   PUSHING AND PULLING ARE NOT THE SAME FORCE.
 
-   Force goes into a decaying velocity rather than straight into
-   position. The old version added to position while the cursor was in
-   range, which meant a star stopped dead the instant you left it. Now
-   it carries on and settles, which is the difference between a field
-   of dots and a field with mass.
+   They used to share one law, and that was the fault behind every
+   complaint. A shove wants to be steep, local and impulsive. A gravity
+   well wants to be shallow and wide, or a star falls into it gaining
+   speed the whole way and leaves the other side faster than it
+   arrived. That is a hyperbolic flyby, and it is what "the stars just
+   slingshot" was.
 
-   SWIRL is per star, not global. swirl is drawn as a random sign times
-   a random magnitude raised to SWIRL_BIAS, and raising a number below
-   one to a power pushes it toward zero, so most stars are born with
-   almost no swirl and get shoved straight out from behind. A minority
-   curl, and they curl in both directions. Raise SWIRL_BIAS for more
-   straight ones. Set SWIRL to 0 and every star goes straight. */
-/* THE REGRESSION THIS FIXES, so it is not repeated.
+   Tuning one always broke the other, because they were one number.
+   They are two now, and neither constrains the other.
+   ========================================================= */
 
-   The first physics pass replaced a straight line falloff with a
-   softened inverse square AND kept a squared taper on top of it. Two
-   falloffs multiplied together collapsed the whole field into a 30px
-   bubble. Measured against the version that worked: five times weaker
-   at 60px, FORTY-SIX times weaker at 100px.
+/* PUSH. Calibrated by Mathew, do not retune without printing the force
+   at 30, 60 and 100 first. Current: 0.45, 0.12, 0.011.
 
-   Everything interesting lived in that mid range. The even spread
-   needs stars 60 to 110px out to actually move, and a spiral needs a
-   star to travel a long arc while the tangential force works on it.
-   Neither had anything left to work with.
+   SOFTEN is the softening length of the inverse square, the device real
+   N-body simulations use to stop the force diverging at zero distance.
+   At r = SOFTEN the force is exactly half its maximum.
 
-   The taper is linear now, SOFTEN is wide enough that the inverse
-   square shapes the curve rather than strangling it, and the radius is
-   wider. Current profile against the original: 0.70 vs 0.44 at 30px,
-   0.33 vs 0.29 at 60px, 0.097 vs 0.078 at 100px. Stronger everywhere,
-   still fiercer up close.
-
-   IF THIS EVER FEELS DEAD AGAIN, print the force at 30, 60 and 100
-   before changing anything else. */
+   FALLOFF_EXP is the one knob for the outer half. At 100px: exponent 1
+   gives 0.097, 2 gives 0.032, 3 gives 0.011, 4 gives 0.0036. It does
+   not change the close range, which is 0.45 at every setting. */
 const REPEL_RADIUS = 150;
-
-/* Pull reach, as a multiple of REPEL_RADIUS. It was 1.7, so a star
-   250px away was already being hauled in, and distant stars arriving
-   fast is what made the gather feel cheap. At 1.0 the pull reaches
-   exactly as far as the push. Raise it if the gather ends up feeling
-   like too small a circle. */
-const ATTRACT_REACH = 1.0;
-
-/* HOW SHARPLY DISTANCE STOPS MATTERING. The taper is raised to this
-   power before it scales the force, so this is the one knob for the
-   outer half of the field.
-
-   Measured with everything else unchanged, force at 100px:
-   exponent 1 gives 0.097, 2 gives 0.032, 3 gives 0.011, 4 gives 0.0036.
-
-   RAISING IT DOES NOT WEAKEN THE CLOSE RANGE. At 30px the force is 0.45
-   at every setting, which is what the original linear version had. It
-   only steepens the far half, which is exactly the control that was
-   missing when the whole curve had to be traded off against itself. */
+const REPEL_FORCE = 1.1;
+const SOFTEN = 60;
 const FALLOFF_EXP = 3;
 
-const REPEL_FORCE = 1.1;
-const ATTRACT_FORCE = 0.95;
-
-/* Swirl is PER STAR when pushing, which is what makes some shove
-   straight and some curl. Pulling uses one shared direction instead:
-   mixed directions collapsing inward read as chaos, one direction
-   reads as a vortex, and the vortex was the part worth keeping. */
-const HOLD_SPIN = 0.85;
+/* Swirl is per star and drawn as a random sign times a magnitude raised
+   to SWIRL_BIAS. Raising a number below one to a power pushes it toward
+   zero, so most stars are born with almost none and get shoved straight
+   out from behind, and a minority curl, in both directions. Set SWIRL
+   to 0 and every star goes straight. */
 const SWIRL = 0.95;
 const SWIRL_BIAS = 2.4;
+
+/* PULL. A well with a repulsive core, not a point of attraction.
+
+   Inside HOLD_CORE the pull becomes a push. Nothing reaches the centre,
+   so nothing can gain the speed that produced the slingshot, and stars
+   settle into a shell at that radius instead of piling onto a point.
+   It is the same Lennard-Jones shape the stars already use on each
+   other, applied to the cursor: attractive at range, repulsive at the
+   core.
+
+   Both branches are zero AT the core radius, so the two halves meet
+   without a step, and `rise` ramps the pull in over the first core
+   width above it rather than switching it on.
+
+   ATTRACT_EXP shapes the outer half of the well the same way
+   FALLOFF_EXP shapes the push. Pull at 60px is 0.066, at 100px 0.074,
+   at 150px 0.015, zero at 190. Deliberately flat through the middle:
+   a star should cross the field at a steady pace, not accelerate the
+   whole way in. */
+const HOLD_REACH = 190;
+
+/* THE CORE TIGHTENS WHILE YOU HOLD.
+
+   A fixed core radius killed the slingshot but bought a new problem:
+   the stars circled forever at arm's length and never actually came in.
+   So it shrinks, from HOLD_CORE_MAX to HOLD_CORE_MIN over
+   CORE_TIGHTEN_MS of unbroken holding, and the ring is drawn inward
+   with it.
+
+   IT NEVER REACHES ZERO. That is what keeps the slingshot gone: there
+   is always a floor, and by the time the floor is that small the stars
+   are already captured and damped, so there is no infall energy left to
+   fling them with. Setting HOLD_CORE_MIN to 0 brings the slingshot
+   straight back.
+
+   The angular momentum is free. A star circling at 60px takes about two
+   and a half seconds a lap and at 14px about half a second, because
+   tangential speed rises as the radius falls. That is the figure
+   skater, and it is now the payoff for holding rather than an accident.
+
+   SPACING still applies between stars, so they gather as a turning
+   swarm around the cursor rather than collapsing onto one point. That
+   is deliberate: a single dot would read as a bug. */
+const HOLD_CORE_MAX = 60;
+const HOLD_CORE_MIN = 14;
+const CORE_TIGHTEN_MS = 2600;
+
+const HOLD_CORE_FORCE = 0.5;
+const ATTRACT_FORCE = 0.2;
+const ATTRACT_EXP = 2;
+
+/* THE VORTEX IS ITS OWN FORCE, not the radial force rotated.
+
+   Rotating the radial vector was the second half of the orbit problem:
+   wherever the radial force went to zero the spin went with it, so at
+   the exact radius where stars should have been circling there was
+   nothing left to circle them. Independent, it peaks at the core radius
+   and fades to nothing at the reach.
+
+   Terminal tangential speed is HOLD_SPIN divided by (1 - HOLD_DRAG),
+   which at these values is about 1.75 px per frame at the core: one
+   lap every two and a half seconds. */
+const HOLD_SPIN = 0.09;
+
+/* ORBITS NEED FRICTION. This was 0.985, near frictionless, and an
+   orbit that never loses energy is never captured: the star swings
+   past and leaves. Real accretion disks form for exactly this reason.
+   0.96 lets a star shed enough speed to settle into the shell. */
+const HOLD_DRAG = 0.96;
+
+// Stars inside this radius count as held: they brighten, and their
+// number is what drives the cursor's glow.
+const CAPTURE_RADIUS = 95;
+
 const DRAG = 0.92;
+const KICK_MAX = 5;
 
-/* SOFTENING. The cursor force is now an inverse square, 1 over r
-   squared, the law gravity and electrostatics actually obey, instead of
-   the straight line it used to be. That law goes to infinity as r goes
-   to zero, so a star landing on the exact cursor pixel would be flung
-   off the screen. The fix is the one real N-body simulations use: add a
-   constant to the denominator, 1 over (r squared plus e squared). e is
-   the SOFTENING LENGTH, and at r equals e the force is exactly half its
-   maximum. Nothing can diverge, and past a few e it is
-   indistinguishable from true inverse square.
+/* PERSONAL SPACE. Stars push each other apart below this distance,
+   which is why even spacing survives everywhere rather than only in the
+   ring around the cursor. The repulsive core of Lennard-Jones again.
+   Applied equally and oppositely, which is Newton's third law and what
+   keeps the pair's momentum unchanged: push only one and the whole
+   field slowly drifts off screen.
 
-   REPEL_FORCE and ATTRACT_FORCE were rescaled when this went in. The
-   old linear law spent most of its range at middling strength. This one
-   is fierce up close and nearly nothing far away, so the numbers had to
-   grow to feel like anything. */
-const SOFTEN = 60;
-
-/* ORBITS. While you hold, friction nearly switches off. That one number
-   is the whole effect: with damping gone a star pulled inward does not
-   land on the cursor, it MISSES and swings past, which is an orbit.
-
-   And because a centre-seeking force applies no torque, angular
-   momentum is conserved, so a star falling from twice the distance
-   arrives spinning twice as fast. That is the figure skater pulling
-   their arms in. Nothing in the code implements it. It falls out. */
-const HOLD_DRAG = 0.985;
-
-/* PERSONAL SPACE. Stars now push each OTHER apart below this distance,
-   which makes the even spacing that used to appear only in the ring
-   around the cursor true everywhere instead.
-
-   This is the repulsive core of the Lennard-Jones potential, the reason
-   two atoms cannot occupy the same place. The full potential has an
-   attractive tail as well, and switching that on would make the field
-   crystallise into a honeycomb, because that is what evenly spaced
-   mutually repelling points do. We want only the core.
-
-   The push is applied equally and oppositely to both stars, which is
-   Newton's third law and is what conserves the pair's momentum. Push
-   only one of them and the whole field slowly drifts off screen.
-
-   SPACING_FORCE MUST STAY BELOW WHAT DRAG CAN ABSORB. The first attempt
-   used 0.2, and a star with six neighbours then gained 1.2 per frame
-   against an 8 percent bleed, which settles at three times KICK_MAX. So
-   every star with company sat pinned at maximum speed, the field boiled,
-   and the frame rate went with it. Set this to 0 to switch mutual
-   repulsion off entirely. */
+   SPACING_FORCE MUST STAY BELOW WHAT DRAG CAN ABSORB. At 0.2 a star
+   with six neighbours gained 1.2 per frame against an 8 percent bleed,
+   pinned at three times KICK_MAX, and the field boiled. Set to 0 to
+   switch mutual repulsion off. */
 const SPACING = 34;
 const SPACING_FORCE = 0.018;
 
-/* Brightness carries kinetic energy, which goes as v squared. This
-   makes damping VISIBLE: shove the field and watch the heat bleed out
-   of it over about a second.
-
-   It rides almost entirely on ALPHA rather than on size. A bigger
-   sprite is more pixels blended, and under additive compositing the
-   page pays for every one of them, so heat driving size was how the
-   first attempt turned a physics bug into a fillrate collapse. */
+/* Brightness carries kinetic energy, which goes as v squared, so
+   damping becomes VISIBLE: shove the field and watch heat bleed out
+   over about a second. It rides on alpha rather than size, because a
+   bigger sprite is more pixels blended and under additive compositing
+   the page pays for every one. */
 const KE_GAIN = 0.12;
-const KICK_MAX = 5;       // cap, or holding still in one spot accumulates forever
 
 const LINK_DIST = 140;
 const CURSOR_LINK_DIST = 185;
-
-// The web tightens while the pointer is moving fast and relaxes when it
-// stops. SPEED_REF is roughly the px per frame that counts as "fast".
 const SPEED_REF = 26;
 const SPEED_TIGHTEN = 0.2;
 
-const SHOOT_FIRST_MS = 4200;   // one early, so it is not a rumour
+const SHOOT_FIRST_MS = 4200;
 const SHOOT_MIN_MS = 12000;
 const SHOOT_MAX_MS = 26000;
 const SHOOT_MS = 950;
@@ -209,15 +204,14 @@ const SHOOT_TAIL = 130;
 const PAPER_RGB = "243, 236, 217";
 const ACCENT_RGB = "242, 169, 59";
 
-/* LINK BUCKETS. Every link used to be its own beginPath and stroke,
-   because every link had its own alpha, and a busy frame was several
-   hundred separate draw calls. Now a link is sorted into one of twelve
-   buckets, four brightness bands across three tints, and each bucket is
-   drawn as a single path with one stroke. Twelve draw calls, whatever
-   the star count.
+/* LINK BUCKETS. Every link used to be its own beginPath and stroke, and
+   a busy frame was several hundred draw calls. A link is now sorted
+   into one of twelve buckets, four brightness bands across three tints,
+   and each bucket is one path with one stroke. Twelve draw calls,
+   whatever the star count.
 
-   The three tints are the "lamp" effect: a link far from the pointer
-   is paper, a link near it is gold, and the middle one keeps the
+   The three tints are the lamp effect: a link far from the pointer is
+   paper, a link near it is gold, and the middle one keeps the
    transition from being a hard switch. */
 const LINK_BANDS = 4;
 const LINK_ALPHA = 0.2;
@@ -231,24 +225,20 @@ function lerp(pair, t) {
   return pair[0] + (pair[1] - pair[0]) * t;
 }
 
-/* Canvas only, never SVG or DOM nodes per particle: canvas is the one
-   of the three that stays cheap once there are hundreds of moving
-   points redrawn every frame.
+/* Canvas only, never SVG or DOM nodes per particle.
 
-   Pauses entirely under reduced motion (the effect below never
-   starts, the canvas sits empty), and pauses via IntersectionObserver
-   whenever the section scrolls out of view, since redrawing a canvas
-   nobody can see is wasted work rather than a real effect.
+   Pauses entirely under reduced motion, and via IntersectionObserver
+   whenever the section scrolls out of view.
 
-   The whole star pass runs in "lighter" compositing so overlapping
-   halos add rather than paint over each other. That is where the
-   shimmer comes from, and it costs nothing. It has to be reset to
-   source-over at the end of the frame or the next clearRect behaves
-   unpredictably.
+   The whole pass runs in "lighter" compositing so overlapping halos add
+   rather than paint over each other. That is where the shimmer comes
+   from and it costs nothing, but it must be reset to source-over at the
+   end of every frame.
 
-   Pointer tracking listens on the canvas's own parent element, not
-   the canvas itself: the canvas has pointer-events: none so it never
-   intercepts clicks meant for anything layered above it. */
+   HOW A PUSH IS AIMED. The repel pushes away from the cursor and harder
+   the closer the star is, so driving star A toward B means putting the
+   cursor behind A on the line through B. From the side it just
+   scatters them. */
 export default function PlexusField() {
   const canvasRef = useRef(null);
 
@@ -266,6 +256,7 @@ export default function PlexusField() {
     let raf = null;
     let running = false;
     let holding = false;
+    let holdStart = 0;
     let shoot = null;
     let nextShoot = performance.now() + SHOOT_FIRST_MS;
 
@@ -280,10 +271,10 @@ export default function PlexusField() {
       const c = s.getContext("2d");
       const half = SPRITE_PX / 2;
       const g = c.createRadialGradient(half, half, 0, half, half, half);
-      /* The gold has to be LOUD here or the field reads as white with a
-         warm edge, which is what the first version did: the gold band
-         sat at 0.4 alpha and was gone by 46 percent of the radius.
-         It now holds 0.78 close in and still carries at 62 percent. */
+
+      /* The gold has to be LOUD or the field reads as white with a warm
+         edge, which is what the first version did: the gold band sat at
+         0.4 alpha and was gone by 46 percent of the radius. */
       g.addColorStop(0, "rgba(255, 252, 240, 1)");
       g.addColorStop(0.06, `rgba(${coreRgb}, 0.98)`);
       g.addColorStop(0.15, `rgba(${ACCENT_RGB}, 0.78)`);
@@ -295,14 +286,9 @@ export default function PlexusField() {
       return s;
     }
 
-    // Two tints, both with a gold halo. The halo is what makes a cold
-    // white star sit in a warm field instead of looking like a hole
-    // punched in it.
     const spritePaper = makeSprite(PAPER_RGB);
     const spriteGold = makeSprite("255, 214, 140");
 
-    // Built once. Twelve strings rather than twelve string
-    // concatenations per frame.
     const linkStyles = [];
     for (let tint = 0; tint < LINK_TINTS.length; tint++) {
       const band = [];
@@ -312,9 +298,8 @@ export default function PlexusField() {
       linkStyles.push(band);
     }
 
-    // Reused every frame and emptied with length = 0 rather than
-    // reallocated, so a 60fps loop is not handing the garbage
-    // collector twelve new arrays a second.
+    // Reused and emptied with length = 0 rather than reallocated, so a
+    // 60fps loop is not handing the collector twelve arrays a second.
     const buckets = [];
     for (let i = 0; i < LINK_TINTS.length * LINK_BANDS; i++) buckets.push([]);
 
@@ -348,17 +333,14 @@ export default function PlexusField() {
       canvas.style.height = `${height}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // Both populations scale with the section's area rather than a
-      // flat count, so a short header is not crowded and a tall wide
-      // section is not sparse.
       const starCount = Math.max(STAR_MIN, Math.min(STAR_MAX, Math.round((width * height) / STAR_AREA)));
       const dustCount = Math.max(DUST_MIN, Math.min(DUST_MAX, Math.round((width * height) / DUST_AREA)));
 
       stars = Array.from({ length: starCount }, () => makeStar(false));
       dust = Array.from({ length: dustCount }, () => makeStar(true));
 
-      // Sorted far to near once, never per frame. Depth never changes
-      // after birth, so the draw order is correct forever.
+      // Sorted far to near once. Depth never changes after birth, so
+      // the draw order stays correct forever.
       stars.sort((a, b) => a.z - b.z);
       dust.sort((a, b) => a.z - b.z);
     }
@@ -378,18 +360,25 @@ export default function PlexusField() {
       const twinkle = 1 - TWINKLE_DEPTH + TWINKLE_DEPTH * Math.sin(now * p.rate + p.phase);
       const near = p.md < REPEL_RADIUS ? 1 - p.md / REPEL_RADIUS : 0;
       const heat = Math.min(1, (p.kx * p.kx + p.ky * p.ky) * KE_GAIN);
-      const size = p.r * lerp(DEPTH_SIZE, p.z) * scale * (0.92 + twinkle * 0.08 + near * 0.25 + heat * 0.15);
-      ctx.globalAlpha = Math.min(1, lerp(DEPTH_ALPHA, p.z) * twinkle * (1 + near * 0.55 + heat * 0.9));
+
+      // A star you are actually holding should look held. Free: md is
+      // already measured and holding is already known.
+      const caught = holding && p.md < CAPTURE_RADIUS ? 1 - p.md / CAPTURE_RADIUS : 0;
+
+      const size =
+        p.r * lerp(DEPTH_SIZE, p.z) * scale * (0.92 + twinkle * 0.08 + near * 0.25 + heat * 0.15 + caught * 0.35);
+      ctx.globalAlpha = Math.min(
+        1,
+        lerp(DEPTH_ALPHA, p.z) * twinkle * (1 + near * 0.55 + heat * 0.9 + caught * 1.1),
+      );
       ctx.drawImage(p.sprite, p.x - size / 2, p.y - size / 2, size, size);
     }
 
     function step() {
       const now = performance.now();
 
-      // Pointer speed is accumulated by the move handler, which can
-      // fire many times between frames, and consumed once here. Reading
-      // it per event instead would sample whatever the last two events
-      // happened to be.
+      // Accumulated by the move handler, which can fire several times
+      // between frames, and consumed once here.
       pointerSpeed = pointerSpeed * 0.82 + moveAccum * 0.18;
       moveAccum = 0;
       const rush = Math.min(1, pointerSpeed / SPEED_REF);
@@ -403,9 +392,15 @@ export default function PlexusField() {
         draw(p, now, DUST_GLOW_SCALE);
       }
 
-      const force = holding ? -ATTRACT_FORCE : REPEL_FORCE;
       const drag = holding ? HOLD_DRAG : DRAG;
-      const reach = holding ? REPEL_RADIUS * ATTRACT_REACH : REPEL_RADIUS;
+      const reach = holding ? HOLD_REACH : REPEL_RADIUS;
+
+      // Smoothstepped rather than linear, so the collapse begins gently
+      // and finishes decisively instead of closing at a constant rate.
+      const th = holding ? Math.min(1, (now - holdStart) / CORE_TIGHTEN_MS) : 0;
+      const core = HOLD_CORE_MAX + (HOLD_CORE_MIN - HOLD_CORE_MAX) * (th * th * (3 - 2 * th));
+
+      let captured = 0;
 
       for (const p of stars) {
         drift(p, drag);
@@ -414,32 +409,38 @@ export default function PlexusField() {
         const dy = p.y - mouse.y;
         const dist = Math.hypot(dx, dy);
         p.md = dist;
+        if (holding && dist < CAPTURE_RADIUS) captured += 1;
 
         if (dist < reach && dist > 0.001) {
           const nx = dx / dist;
           const ny = dy / dist;
+          const depth = lerp(DEPTH_PUSH, p.z);
 
-          // Tangential is the radial vector turned ninety degrees.
-          // Per star when pushing, one shared direction when pulling.
-          const tang = holding ? HOLD_SPIN : p.swirl * SWIRL;
-          const sx = nx - ny * tang;
-          const sy = ny + nx * tang;
-          const len = Math.hypot(sx, sy) || 1;
+          // Positive radial is outward. Spin is a separate term, added
+          // on the perpendicular, never derived from radial.
+          let radial;
+          let spin;
 
-          /* Softened inverse square, windowed to zero at the reach so a
-             star crossing the boundary is not kicked out of nowhere.
-             Molecular dynamics calls that a shifted-force cutoff.
+          if (holding) {
+            if (dist < core) {
+              radial = HOLD_CORE_FORCE * (1 - dist / core);
+            } else {
+              const t = (dist - core) / (HOLD_REACH - core);
+              const rise = Math.min(1, (dist - core) / core);
+              radial = -ATTRACT_FORCE * rise * Math.pow(1 - t, ATTRACT_EXP);
+            }
+            // One shared direction while pulling. Mixed directions
+            // collapsing inward read as chaos; one reads as a vortex.
+            spin = HOLD_SPIN * Math.min(1, dist / core) * (1 - dist / HOLD_REACH);
+          } else {
+            const falloff = (SOFTEN * SOFTEN) / (dist * dist + SOFTEN * SOFTEN);
+            const taper = Math.pow(1 - dist / REPEL_RADIUS, FALLOFF_EXP);
+            radial = REPEL_FORCE * falloff * taper;
+            spin = radial * p.swirl * SWIRL;
+          }
 
-             FALLOFF_EXP shapes the outer half only. The mistake worth
-             not repeating is hard-coding it at 2 while ALSO shortening
-             the radius: that stacked two falloffs and killed the mid
-             range. Named and tunable, with the radius left wide, it is
-             the useful control instead of the accident. */
-          const falloff = (SOFTEN * SOFTEN) / (dist * dist + SOFTEN * SOFTEN);
-          const taper = Math.pow(1 - dist / reach, FALLOFF_EXP);
-          const amount = falloff * taper * force * lerp(DEPTH_PUSH, p.z);
-          p.kx += (sx / len) * amount;
-          p.ky += (sy / len) * amount;
+          p.kx += (nx * radial - ny * spin) * depth;
+          p.ky += (ny * radial + nx * spin) * depth;
 
           const k = Math.hypot(p.kx, p.ky);
           if (k > KICK_MAX) {
@@ -449,6 +450,10 @@ export default function PlexusField() {
         }
       }
 
+      plexusSignal.captured = holding ? captured : 0;
+
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = 1;
       for (const b of buckets) b.length = 0;
 
       for (let i = 0; i < stars.length; i++) {
@@ -460,10 +465,8 @@ export default function PlexusField() {
           const dy = a.y - b.y;
           const dist = Math.hypot(dx, dy);
 
-          // Equal and opposite, so the pair's combined momentum does not
-          // change. Checked BEFORE the link cutoff below, because
-          // SPACING is shorter than the link distance and the continue
-          // would skip it.
+          // Checked BEFORE the link cutoff, because SPACING is shorter
+          // than the link distance and the continue would skip it.
           if (dist < SPACING && dist > 0.001) {
             const push = (1 - dist / SPACING) * SPACING_FORCE;
             const ux = dx / dist;
@@ -476,24 +479,18 @@ export default function PlexusField() {
 
           if (dist >= linkDist) continue;
 
-          // The lamp: warmth comes from whichever END is closest to the
-          // pointer, not the midpoint, so a link reaching out of the lit
-          // area still glows at the near end rather than switching off.
+          // Warmth comes from whichever END is nearest the pointer, not
+          // the midpoint, so a link reaching out of the lit area still
+          // glows at the near end rather than switching off.
           const closest = Math.min(a.md, b.md);
           const warmth = closest < CURSOR_LINK_DIST ? 1 - closest / CURSOR_LINK_DIST : 0;
           const tint = warmth > 0.62 ? 2 : warmth > 0.28 ? 1 : 0;
 
           const strength = (1 - dist / linkDist) * lerp(DEPTH_ALPHA, (a.z + b.z) / 2);
           const bandIdx = Math.min(LINK_BANDS - 1, Math.floor(strength * LINK_BANDS));
-
-          const bucket = buckets[tint * LINK_BANDS + bandIdx];
-          bucket.push(a.x, a.y, b.x, b.y);
+          buckets[tint * LINK_BANDS + bandIdx].push(a.x, a.y, b.x, b.y);
         }
 
-        // The cursor is one more node rather than something stars
-        // chase: it draws toward stars already close, same rule, its
-        // own reach. Holding brightens it, which is the only feedback
-        // that the attract mode is on.
         if (a.md < CURSOR_LINK_DIST && mouse.seen) {
           const strength = (1 - a.md / CURSOR_LINK_DIST) * (holding ? 1 : 0.7);
           const bandIdx = Math.min(LINK_BANDS - 1, Math.floor(strength * LINK_BANDS));
@@ -502,7 +499,6 @@ export default function PlexusField() {
       }
 
       ctx.globalAlpha = 1;
-      ctx.lineWidth = 1;
       for (let tint = 0; tint < LINK_TINTS.length; tint++) {
         for (let b = 0; b < LINK_BANDS; b++) {
           const seg = buckets[tint * LINK_BANDS + b];
@@ -519,9 +515,8 @@ export default function PlexusField() {
 
       for (const p of stars) draw(p, now, GLOW_SCALE);
 
-      /* THE SHOOTING STAR is the only thing here that happens without a
-         pointer, which makes it the only thing that does anything at
-         all on a phone sitting still. */
+      // The only thing here that happens without a pointer, which makes
+      // it the only thing that does anything on a phone sitting still.
       if (!shoot && now > nextShoot) {
         const fromLeft = Math.random() < 0.5;
         const angle = random(0.25, 0.6) * (fromLeft ? 1 : -1) + (fromLeft ? 0 : Math.PI);
@@ -582,6 +577,7 @@ export default function PlexusField() {
     function stop() {
       running = false;
       if (raf) cancelAnimationFrame(raf);
+      plexusSignal.captured = 0;
     }
 
     function handleMove(e) {
@@ -598,32 +594,30 @@ export default function PlexusField() {
 
     function handleDown() {
       holding = true;
+      holdStart = performance.now();
+    }
+
+    function handleUp() {
+      holding = false;
+      plexusSignal.captured = 0;
     }
 
     function handleLeave() {
-      holding = false;
+      handleUp();
       mouse.x = -9999;
       mouse.y = -9999;
       mouse.seen = false;
     }
 
-    function handleUp() {
-      holding = false;
-    }
-
     resize();
     window.addEventListener("resize", resize);
 
-    /* POINTER EVENTS, NOT MOUSE EVENTS. A finger dragging across the
-       section fires pointermove; mousemove fires once as a synthesized
-       event after a tap and never during the drag, so on a phone the
-       field would sit inert.
-
-       Nothing here calls preventDefault, so vertical scrolling is
-       untouched and hold to attract costs the page nothing. pointerup
-       and pointercancel both release, because pointerleave does not
-       fire when a finger lifts, and pointercancel is what fires when
-       the browser takes a gesture over for scrolling. */
+    /* POINTER EVENTS, NOT MOUSE EVENTS. A finger dragging fires
+       pointermove; mousemove fires once as a synthesized event after a
+       tap and never during the drag, so on a phone the field would sit
+       inert. Nothing calls preventDefault, so scrolling is untouched.
+       pointerup and pointercancel both release, because pointerleave
+       does not fire when a finger lifts. */
     container.addEventListener("pointermove", handleMove, { passive: true });
     container.addEventListener("pointerdown", handleDown, { passive: true });
     container.addEventListener("pointerup", handleUp);
